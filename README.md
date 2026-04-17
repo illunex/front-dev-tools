@@ -22,6 +22,12 @@ curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/instal
 - 설치 스크립트: [`install/install-sync-env.sh`](./install/install-sync-env.sh)
 - 문서: [`docs/sync-env.md`](./docs/sync-env.md)
 
+## Skills
+
+Claude Code에서 바로 사용할 수 있는 skill이 포함되어 있습니다.
+
+- [`skills/sync-env`](./skills/sync-env/SKILL.md) — GitHub Actions 환경변수를 로컬 `.env` 파일로 동기화
+
 ## Repository Structure
 
 ```text
@@ -30,6 +36,9 @@ curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/instal
 │   └── sync-env.md
 ├── install/
 │   └── install-sync-env.sh
-└── scripts/
-    └── sync-env.sh
+├── scripts/
+│   └── sync-env.sh
+└── skills/
+    └── sync-env/
+        └── SKILL.md
 ```
