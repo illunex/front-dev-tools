@@ -138,7 +138,7 @@ type: 한국어 메시지
 
 ## 7. 프로젝트 폴더 구조
 
-> Next.js App Router + Feature-Sliced Design(FSD) 유사 패턴을 사용합니다.
+> Next.js App Router + Feature based 패턴을 사용합니다.
 > 새 기능을 추가할 때 아래 구조를 따르세요.
 
 ```text
@@ -181,15 +181,15 @@ src/
 
 ### 레이어별 역할 요약
 
-| 레이어 | 역할 | 의존 가능한 레이어 |
-| --- | --- | --- |
-| `app/` | 라우팅, 레이아웃 선언 | screen, components, features |
-| `screen/` | 페이지 조합 (screen = 여러 feature 컴포넌트 조합) | features, components |
-| `features/` | 비즈니스 로직, API, 상태 | apis, hooks, store, types, utils |
-| `components/` | UI/레이아웃 기본 단위 (비즈니스 로직 없음) | hooks, types, utils |
-| `apis/` | HTTP 클라이언트 설정 | — |
-| `hooks/` | 재사용 가능한 React 훅 | — |
-| `store/` | 전역 상태 | types |
+| 레이어        | 역할                                              | 의존 가능한 레이어               |
+| ------------- | ------------------------------------------------- | -------------------------------- |
+| `app/`        | 라우팅, 레이아웃 선언                             | screen, components, features     |
+| `screen/`     | 페이지 조합 (screen = 여러 feature 컴포넌트 조합) | features, components             |
+| `features/`   | 비즈니스 로직, API, 상태                          | apis, hooks, store, types, utils |
+| `components/` | UI/레이아웃 기본 단위 (비즈니스 로직 없음)        | hooks, types, utils              |
+| `apis/`       | HTTP 클라이언트 설정                              | —                                |
+| `hooks/`      | 재사용 가능한 React 훅                            | —                                |
+| `store/`      | 전역 상태                                         | types                            |
 
 ### 파일 작성 위치 판단 기준
 
