@@ -184,7 +184,7 @@ src/
 | ------------- | ------------------------------------------------- | -------------------------------- |
 | `app/`        | 라우팅, 레이아웃 선언                             | screen, components, features     |
 | `screen/`     | 페이지 조합 (screen = 여러 feature 컴포넌트 조합) | features, components             |
-| `features/`   | 비즈니스 로직, API, 상태                          | apis, hooks, store, types, utils |
+| `features/`   | 비즈니스 로직, API, 상태                          | apis, hooks, store, types, utils, components |
 | `components/` | UI/레이아웃 기본 단위 (비즈니스 로직 없음)        | hooks, types, utils              |
 | `apis/`       | HTTP 클라이언트 설정                              | —                                |
 | `hooks/`      | 재사용 가능한 React 훅                            | —                                |
