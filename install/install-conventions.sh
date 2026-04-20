@@ -9,7 +9,7 @@ INSTALL_CODEX=false
 INSTALL_CURSOR=false
 INSTALL_ALL=true
 DRY_RUN=false
-INTERACTIVE=false
+FORCE=false
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -40,7 +40,7 @@ Options:
   --repo <owner/repo>  소스 GitHub 레포지토리. 기본값: $SOURCE_REPO
   --ref <git-ref>    설치할 브랜치·태그·커밋. 기본값: $REF
   --dry-run          실제 설치 없이 어떤 파일이 어디에 설치되는지 출력만
-  --interactive      기존 파일이 있을 때 덮어쓰기 여부를 직접 확인 (기본: 자동 덮어쓰기)
+  --force            기존 파일 확인 없이 백업 후 자동 덮어쓰기
   -h, --help         이 도움말 출력
 
 Examples:
@@ -48,7 +48,7 @@ Examples:
   bash install-conventions.sh --claude
   bash install-conventions.sh --ref v1.0.0
   bash install-conventions.sh --dry-run
-  bash install-conventions.sh --interactive
+  bash install-conventions.sh --force
 EOF
 }
 
@@ -59,8 +59,8 @@ while [[ $# -gt 0 ]]; do
     --cursor)  INSTALL_CURSOR=true; INSTALL_ALL=false; shift ;;
     --repo)    SOURCE_REPO="${2:-}"; shift 2 ;;
     --ref)     REF="${2:-}"; shift 2 ;;
-    --dry-run)     DRY_RUN=true; shift ;;
-    --interactive) INTERACTIVE=true; shift ;;
+    --dry-run) DRY_RUN=true; shift ;;
+    --force)   FORCE=true; shift ;;
     -h|--help) usage; exit 0 ;;
     *) error "알 수 없는 옵션: $1"; usage >&2; exit 1 ;;
   esac
@@ -100,7 +100,10 @@ install_file() {
   mkdir -p "$dest_dir"
 
   if [[ -f "$dest_path" ]]; then
-    if [[ "$INTERACTIVE" == "true" ]]; then
+    if [[ "$FORCE" == "true" ]]; then
+      mv "$dest_path" "${dest_path}.bak.${TIMESTAMP}"
+      warn "기존 파일 백업: ${dest_path}.bak.${TIMESTAMP}"
+    else
       echo
       warn "이미 존재하는 파일: $dest_path"
       read -r -p "덮어쓰겠습니까? 기존 파일은 백업됩니다. [y/N] " answer
@@ -114,9 +117,6 @@ install_file() {
           return
           ;;
       esac
-    else
-      mv "$dest_path" "${dest_path}.bak.${TIMESTAMP}"
-      warn "기존 파일 백업: ${dest_path}.bak.${TIMESTAMP}"
     fi
   fi
 
