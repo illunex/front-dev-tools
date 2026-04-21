@@ -1,7 +1,8 @@
 # 회사 공통 개발 컨벤션 (Claude Code)
 
 > 이 파일은 `~/.claude/CLAUDE.md`에 설치되어 Claude Code의 모든 세션에 자동으로 로드됩니다.
-> 원본은 `conventions/shared/conventions.md`입니다. 수정 후 세 툴 파일에 동기화하세요.
+> 원본은 `conventions/shared/conventions.md`입니다. 수정 후 동기화하세요.
+> 커밋·PR·브랜치·폴더 구조 규칙은 `conventions/claude/skills/` 하위 skill 파일로 분리되어 있습니다.
 
 ---
 
@@ -10,7 +11,7 @@
 - **모든 응답·질문·요약은 한국어**로 작성.
 - 코드 설명 시 "이 코드는 ~합니다" 대신 **변경 이유(why)** 중심으로 설명.
 - 파일 수정 전 반드시 해당 파일을 읽고 기존 맥락 파악.
-- 커밋 메시지 제안 시 아래 규칙 적용.
+- 커밋 메시지 제안 시 `company-commit` skill 참조.
 
 ---
 
@@ -33,169 +34,26 @@
 
 ---
 
-## 3. 커밋 메시지
-
-### 형식
-
-```
-type: 한국어 메시지
-```
-
-- 본문·푸터는 선택 사항.
-- 메시지는 명령형 현재 시제("추가하다", "수정하다")보다 **명사형**("추가", "수정") 권장.
-  - 예: `feat: 로그인 페이지 추가`
-  - 예: `fix: 토큰 만료 시 자동 로그아웃 처리`
-- **Breaking Change는 커밋 메시지에 표기하지 않고 PR 본문의 `## Breaking Changes` 섹션에 기재.**
-
-### 허용 타입 (Conventional Commits)
-
-| 타입       | 용도                                                |
-| ---------- | --------------------------------------------------- |
-| `feat`     | 새로운 기능 추가                                    |
-| `fix`      | 버그 수정                                           |
-| `docs`     | 문서만 변경                                         |
-| `style`    | 코드 동작에 영향 없는 포맷 변경 (공백, 세미콜론 등) |
-| `refactor` | 기능 추가·버그 수정 없는 코드 리팩터링              |
-| `test`     | 테스트 추가·수정                                    |
-| `build`    | 빌드 시스템·외부 의존성 변경 (webpack, pnpm 등)     |
-| `ci`       | CI 설정 변경                                        |
-| `chore`    | 빌드·CI 외의 기타 작업                              |
-
-<!-- TODO: scope 사용 여부 (예: feat(auth): ...) -->
-<!-- TODO: Breaking Change 표기 규칙 -->
-<!-- TODO: 이슈/티켓 번호 연결 규칙 (푸터 Closes #123 등) -->
-
----
-
-## 4. PR 규칙
-
-### 제목
-
-- 한국어, 현재 작업 내용을 간단히 요약한 제목만 작성. (type 접두사 제외)
-
-### 본문 템플릿
-
-```markdown
-## 작업 내용
-
-- TODO
-
-## Breaking Changes
-
-- 없음
-
-## 기타
-
-- TODO
-```
-
-- Breaking Change가 없으면 `## Breaking Changes` 섹션은 `- 없음`으로 남겨둡니다.
-- Breaking Change가 있으면 **무엇이 바뀌는지**, **마이그레이션 방법**을 구체적으로 기술합니다.
-  <!-- TODO: 리뷰어 지정 규칙 -->
-  <!-- TODO: 레이블 사용 규칙 -->
-  <!-- TODO: Draft PR 사용 기준 -->
-  <!-- TODO: 스크린샷/영상 첨부 기준 -->
-  <!-- TODO: PR 크기 가이드라인 (최대 diff 라인 수 등) -->
-
----
-
-## 5. 브랜치 네이밍
-
-```
-<type>/<요약-영어-kebab-case>
-```
-
-| 접두사      | 사용 시점           |
-| ----------- | ------------------- |
-| `feature/`  | 신규 기능 개발      |
-| `fix/`      | 일반 버그 수정      |
-| `hotfix/`   | 긴급 프로덕션 패치  |
-| `refactor/` | 리팩터링            |
-| `chore/`    | 설정·의존성 등 기타 |
-| `docs/`     | 문서 작업만         |
-
-예: `feature/login-page`, `fix/token-refresh-bug`
-
-<!-- TODO: 이슈 번호 포함 규칙 (예: feature/123-login-page) -->
-<!-- TODO: 메인 브랜치명 (main vs master) -->
-<!-- TODO: 릴리즈/핫픽스 브랜치 전략 -->
-
----
-
-## 6. TypeScript 기본 원칙
+## 3. TypeScript 기본 원칙
 
 - **`any` 지양.** 불가피할 경우 `// eslint-disable-next-line @typescript-eslint/no-explicit-any` + 한 줄 사유 주석.
 - `tsconfig.json`에 `"strict": true` 전제.
 - 타입 추론이 명확하면 타입 어노테이션 생략 가능. 공개 API(함수 반환 타입 등)는 명시.
 - `as` 타입 단언보다 **타입 가드** 또는 **제네릭** 우선.
 - `unknown`을 `any` 대신 활용하고, 사용 전 타입 검사 수행.
-  <!-- TODO: 에러 처리 패턴 (unknown catch 등) -->
-  <!-- TODO: Nullable/Optional 정책 (null vs undefined) -->
-  <!-- TODO: 유틸리티 타입 활용 규칙 -->
+<!-- TODO: 에러 처리 패턴 (unknown catch 등) -->
+<!-- TODO: Nullable/Optional 정책 (null vs undefined) -->
+<!-- TODO: 유틸리티 타입 활용 규칙 -->
 
 ---
 
-## 7. 프로젝트 폴더 구조
+## 작업별 참조 Skill
 
-> Next.js App Router + Feature based 패턴을 사용합니다.
-> 새 기능을 추가할 때 아래 구조를 따르세요.
+아래 작업을 수행할 때 해당 skill을 참조합니다.
 
-```text
-src/
-├── app/                        # Next.js App Router — 라우팅만 담당
-│   ├── (contents)/             # 인증 후 접근 가능한 메인 페이지 라우트 그룹
-│   ├── api/                    # Next.js Route Handler (서버 API 엔드포인트)
-│   ├── auth/                   # 인증 관련 페이지 라우트
-│   ├── dashboard/              # 대시보드 페이지 라우트
-│   └── detail/[id]/            # 동적 라우트 페이지
-│
-├── screen/                     # 페이지 단위 화면 조합 컴포넌트
-│   └── {feature}/              # 기능별 screen 디렉토리
-│       └── {name}Screen/       # 하나의 화면 = index.tsx + style.ts
-│
-├── features/                   # 기능별 모듈 (비즈니스 로직의 핵심)
-│   ├── common/                 # 여러 기능에서 공유하는 컴포넌트·로직
-│   └── {feature}/
-│       ├── api/                # API 호출 함수 (axios 기반 순수 함수)
-│       ├── components/         # 해당 기능 전용 컴포넌트
-│       ├── constants/          # 해당 기능 전용 상수
-│       ├── queries/            # React Query hooks (useQuery, useMutation)
-│       ├── store/              # Zustand 스토어
-│       ├── types/              # 타입 정의
-│       └── utils/              # 유틸 함수
-│
-├── components/                 # 기능과 무관한 공통 재사용 컴포넌트
-│   ├── layouts/                # 레이아웃 컴포넌트 (헤더, 네비게이션 등)
-│   └── ui/                     # UI 기본 컴포넌트 (버튼, 모달, 탭 등)
-│
-├── apis/                       # Axios 인스턴스 및 인터셉터 설정
-├── hooks/                      # 전역 커스텀 훅
-├── lib/                        # 외부 라이브러리 설정 (OAuth 등)
-├── store/                      # 전역 Zustand 스토어
-├── constants/                  # 전역 상수
-├── types/                      # 전역 타입 정의
-├── utils/                      # 전역 유틸 함수
-└── styles/                     # 전역 스타일
-```
-
-### 레이어별 역할 요약
-
-| 레이어        | 역할                                              | 의존 가능한 레이어               |
-| ------------- | ------------------------------------------------- | -------------------------------- |
-| `app/`        | 라우팅, 레이아웃 선언                             | screen, components, features     |
-| `screen/`     | 페이지 조합 (screen = 여러 feature 컴포넌트 조합) | features, components             |
-| `features/`   | 비즈니스 로직, API, 상태                          | apis, hooks, store, types, utils, components |
-| `components/` | UI/레이아웃 기본 단위 (비즈니스 로직 없음)        | hooks, types, utils              |
-| `apis/`       | HTTP 클라이언트 설정                              | —                                |
-| `hooks/`      | 재사용 가능한 React 훅                            | —                                |
-| `store/`      | 전역 상태                                         | types                            |
-
-### 파일 작성 위치 판단 기준
-
-- **특정 기능에서만 쓰는 컴포넌트** → `features/{feature}/components/`
-- **여러 기능에서 쓰는 컴포넌트** → `features/common/components/` 또는 `components/ui/`
-- **페이지 전체 레이아웃 조합** → `screen/{feature}/`
-- **API 호출 함수** → `features/{feature}/api/`
-- **React Query hooks** → `features/{feature}/queries/`
-- **전역 상태** → `features/{feature}/store/` 또는 `store/`
-<!-- TODO: 추가 규칙 보강 -->
+| 작업 | Skill |
+| ---- | ----- |
+| 커밋 메시지 작성·제안 | `company-commit` |
+| 브랜치 생성·네이밍 | `company-branch` |
+| PR 제목·본문 작성 | `company-pr` |
+| 새 파일·컴포넌트 위치 결정 | `company-folder-structure` |

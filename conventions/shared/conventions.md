@@ -4,6 +4,7 @@
 > 각 툴 전용 파일(`conventions/claude/CLAUDE.md`, `conventions/codex/AGENTS.md`, `conventions/cursor/company.mdc`)은
 > 이 내용을 기반으로 도입부/포맷만 달리해 제공됩니다.
 > 수정할 때는 이 파일을 먼저 편집하고 각 툴 파일에 동기화하세요.
+> **Claude Code 배포본**: 섹션 3(커밋)·4(PR)·5(브랜치)·7(폴더 구조)은 `conventions/claude/skills/` 하위 skill 파일로 분해됩니다. 해당 섹션 수정 시 skill 파일도 같이 업데이트하세요.
 
 ---
 

@@ -132,6 +132,10 @@ echo
 
 if [[ "$INSTALL_CLAUDE" == "true" ]]; then
   install_file "conventions/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+  install_file "conventions/claude/skills/company-commit/SKILL.md" "$HOME/.claude/skills/company-commit/SKILL.md"
+  install_file "conventions/claude/skills/company-branch/SKILL.md" "$HOME/.claude/skills/company-branch/SKILL.md"
+  install_file "conventions/claude/skills/company-pr/SKILL.md" "$HOME/.claude/skills/company-pr/SKILL.md"
+  install_file "conventions/claude/skills/company-folder-structure/SKILL.md" "$HOME/.claude/skills/company-folder-structure/SKILL.md"
 fi
 
 if [[ "$INSTALL_CODEX" == "true" ]]; then
@@ -153,7 +157,9 @@ success "설치 완료!"
 echo
 
 if [[ "$INSTALL_CLAUDE" == "true" ]]; then
-  info "Claude Code: 다음 세션부터 자동으로 컨벤션이 로드됩니다."
+  info "Claude Code: 다음 세션부터 컨벤션이 로드됩니다."
+  info "  → CLAUDE.md: 언어·pnpm·TypeScript 원칙 (항상 로드)"
+  info "  → Skills: 커밋·브랜치·PR·폴더 구조 (작업 시점에 자동 참조)"
 fi
 if [[ "$INSTALL_CODEX" == "true" ]]; then
   info "Codex: 다음 세션부터 자동으로 컨벤션이 로드됩니다."
