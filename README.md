@@ -21,7 +21,7 @@ GitHub Actions environment variables를 로컬 `.env` 파일로 동기화하는 
 curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/install/install-sync-env.sh | bash
 ```
 
-[`scripts/sync-env.sh`](./scripts/sync-env.sh) · [`install/install-sync-env.sh`](./install/install-sync-env.sh) · [`docs/sync-env.md`](./docs/sync-env.md)
+[스크립트](./scripts/sync-env.sh) · [설치 스크립트](./install/install-sync-env.sh) · [문서](./docs/sync-env.md)
 
 ---
 
@@ -33,7 +33,7 @@ curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/instal
 curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/install/install-create-company-frontend.sh | bash
 ```
 
-[`scripts/create-company-frontend.mjs`](./scripts/create-company-frontend.mjs) · [`install/install-create-company-frontend.sh`](./install/install-create-company-frontend.sh) · [`skills/create-company-frontend`](./skills/create-company-frontend/SKILL.md) · [`docs/create-company-frontend.md`](./docs/create-company-frontend.md)
+[스크립트](./scripts/create-company-frontend.mjs) · [설치 스크립트](./install/install-create-company-frontend.sh) · [스킬](./skills/create-company-frontend/SKILL.md) · [문서](./docs/create-company-frontend.md)
 
 ---
 
@@ -45,7 +45,7 @@ curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/instal
 curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/install/install-weekly-report.sh | bash
 ```
 
-[`scripts/weekly-report.sh`](./scripts/weekly-report.sh) · [`install/install-weekly-report.sh`](./install/install-weekly-report.sh) · [`skills/weekly-report`](./skills/weekly-report/SKILL.md) · [`docs/weekly-report.md`](./docs/weekly-report.md)
+[스크립트](./scripts/weekly-report.sh) · [설치 스크립트](./install/install-weekly-report.sh) · [스킬](./skills/weekly-report/SKILL.md) · [문서](./docs/weekly-report.md)
 
 ---
 
@@ -67,7 +67,7 @@ curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/instal
 curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/install/install-conventions.sh | bash -s -- --cursor --force
 ```
 
-[`conventions/`](./conventions/) · [`install/install-conventions.sh`](./install/install-conventions.sh) · [`docs/conventions.md`](./docs/conventions.md)
+[템플릿](./conventions/) · [설치 스크립트](./install/install-conventions.sh) · [문서](./docs/conventions.md)
 
 ## Skills
 
