@@ -30,7 +30,17 @@ Claude Code · Codex · Cursor에 회사 공통 개발 컨벤션을 설치합니
 설치:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/install/install-conventions.sh | bash
+# 전체 설치
+curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/install/install-conventions.sh | bash -s -- --force
+
+# cluade만 설치
+curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/install/install-conventions.sh | bash -s -- --claude --force
+
+# codex만 설치
+curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/install/install-conventions.sh | bash -s -- --codex --force
+
+#cursor만 설치
+curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/install/install-conventions.sh | bash -s -- --cursor --force
 ```
 
 - 템플릿: [`conventions/`](./conventions/)
@@ -49,13 +59,32 @@ Claude Code에서 바로 사용할 수 있는 skill이 포함되어 있습니다
 .
 ├── conventions/
 │   ├── claude/
-│   │   └── CLAUDE.md
+│   │   ├── CLAUDE.md
+│   │   └── skills/
+│   │       ├── company-branch/
+│   │       │   └── SKILL.md
+│   │       ├── company-commit/
+│   │       │   └── SKILL.md
+│   │       ├── company-folder-structure/
+│   │       │   └── SKILL.md
+│   │       └── company-pr/
+│   │           └── SKILL.md
 │   ├── codex/
-│   │   └── AGENTS.md
+│   │   ├── AGENTS.md
+│   │   └── skills/
+│   │       ├── company-branch/
+│   │       │   └── SKILL.md
+│   │       ├── company-commit/
+│   │       │   └── SKILL.md
+│   │       ├── company-folder-structure/
+│   │       │   └── SKILL.md
+│   │       └── company-pr/
+│   │           └── SKILL.md
 │   ├── cursor/
 │   │   └── company.mdc
 │   └── shared/
-│       └── conventions.md
+│       ├── conventions.md
+│       └── structure.md
 ├── docs/
 │   ├── conventions.md
 │   └── sync-env.md

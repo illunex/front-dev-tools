@@ -140,6 +140,10 @@ fi
 
 if [[ "$INSTALL_CODEX" == "true" ]]; then
   install_file "conventions/codex/AGENTS.md" "$HOME/.codex/AGENTS.md"
+  install_file "conventions/codex/skills/company-commit/SKILL.md" "$HOME/.codex/skills/company-commit/SKILL.md"
+  install_file "conventions/codex/skills/company-branch/SKILL.md" "$HOME/.codex/skills/company-branch/SKILL.md"
+  install_file "conventions/codex/skills/company-pr/SKILL.md" "$HOME/.codex/skills/company-pr/SKILL.md"
+  install_file "conventions/codex/skills/company-folder-structure/SKILL.md" "$HOME/.codex/skills/company-folder-structure/SKILL.md"
 fi
 
 if [[ "$INSTALL_CURSOR" == "true" ]]; then
@@ -162,7 +166,8 @@ if [[ "$INSTALL_CLAUDE" == "true" ]]; then
   info "  → Skills: 커밋·브랜치·PR·폴더 구조 (작업 시점에 자동 참조)"
 fi
 if [[ "$INSTALL_CODEX" == "true" ]]; then
-  info "Codex: 다음 세션부터 자동으로 컨벤션이 로드됩니다."
+  info "Codex: 다음 세션부터 AGENTS.md가 상시 로드됩니다."
+  info "Skills: ~/.codex/skills/ 하위 skill들이 작업 시점에 자동 참조됩니다."
 fi
 if [[ "$INSTALL_CURSOR" == "true" ]]; then
   info "Cursor: Cursor를 재시작하면 컨벤션 룰이 활성화됩니다."
