@@ -31,21 +31,56 @@ Examples:
 EOF
 }
 
-# macOS BSD date: get ISO week Monday for a given YYYY-MM-DD
+date_week_offset() {
+  local d="$1"
+  local weeks="$2"
+
+  if date -j -v-"${weeks}"w -f "%Y-%m-%d" "$d" +"%Y-%m-%d" >/dev/null 2>&1; then
+    date -j -v-"${weeks}"w -f "%Y-%m-%d" "$d" +"%Y-%m-%d"
+    return
+  fi
+
+  date -d "$d - $weeks weeks" +"%Y-%m-%d"
+}
+
+date_day_offset() {
+  local d="$1"
+  local days="$2"
+  local bsd_days="$days"
+
+  if [[ "$bsd_days" != -* && "$bsd_days" != +* ]]; then
+    bsd_days="+$bsd_days"
+  fi
+
+  if date -j -v"${bsd_days}"d -f "%Y-%m-%d" "$d" +"%Y-%m-%d" >/dev/null 2>&1; then
+    date -j -v"${bsd_days}"d -f "%Y-%m-%d" "$d" +"%Y-%m-%d"
+    return
+  fi
+
+  if [[ "$days" == -* ]]; then
+    date -d "$d - ${days#-} days" +"%Y-%m-%d"
+  else
+    date -d "$d + $days days" +"%Y-%m-%d"
+  fi
+}
+
+# Get ISO week Monday for a given YYYY-MM-DD. Supports macOS BSD date and GNU date.
 iso_monday() {
   local d="$1"
   local dow
-  dow=$(date -j -f "%Y-%m-%d" "$d" +"%u")  # 1=Mon ... 7=Sun
+  if ! dow=$(date -j -f "%Y-%m-%d" "$d" +"%u" 2>/dev/null); then
+    dow=$(date -d "$d" +"%u")
+  fi
   local back=$(( dow - 1 ))
   if [[ $back -eq 0 ]]; then
     echo "$d"
   else
-    date -j -v-${back}d -f "%Y-%m-%d" "$d" +"%Y-%m-%d"
+    date_day_offset "$d" "-$back"
   fi
 }
 
 iso_sunday() {
-  date -j -v+6d -f "%Y-%m-%d" "$1" +"%Y-%m-%d"
+  date_day_offset "$1" "6"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -87,12 +122,12 @@ while [[ $# -gt 0 ]]; do
 done
 
 if ! command -v gh >/dev/null 2>&1; then
-  echo "GitHub CLI (gh) is required. Install: brew install gh" >&2
+  echo "GitHub CLI (gh) is required. Install from https://cli.github.com/ or your OS package manager." >&2
   exit 1
 fi
 
 if ! command -v jq >/dev/null 2>&1; then
-  echo "jq is required. Install: brew install jq" >&2
+  echo "jq is required. Install from https://jqlang.github.io/jq/download/ or your OS package manager." >&2
   exit 1
 fi
 
@@ -110,7 +145,7 @@ fi
 if [[ -z "$FROM_DATE" && -z "$TO_DATE" ]]; then
   TODAY=$(date +"%Y-%m-%d")
   if [[ "$WEEK_OFFSET" -gt 0 ]]; then
-    TODAY=$(date -j -v-${WEEK_OFFSET}w +"%Y-%m-%d")
+    TODAY=$(date_week_offset "$TODAY" "$WEEK_OFFSET")
   fi
   MONDAY=$(iso_monday "$TODAY")
   FROM_DATE="$MONDAY"

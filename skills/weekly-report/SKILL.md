@@ -34,9 +34,10 @@ description: Use when the user asks to summarize weekly work, generate a weekly 
 
 ## Prerequisites
 
-1. **GitHub CLI(`gh`) 설치** — `brew install gh` 또는 [cli.github.com](https://cli.github.com)
-2. **gh 인증** — `gh auth login` 완료
-3. **jq 설치** — `brew install jq`
+1. **Bash 실행 환경** — macOS/Linux 터미널 또는 Windows Git Bash/WSL
+2. **GitHub CLI(`gh`) 설치** — macOS는 `brew install gh`, Windows는 `winget install GitHub.cli` 또는 [cli.github.com](https://cli.github.com)
+3. **gh 인증** — `gh auth login` 완료
+4. **jq 설치** — macOS는 `brew install jq`, Windows는 `winget install jqlang.jq` 또는 [jq 다운로드](https://jqlang.github.io/jq/download/)
 
 ## Step 1: weekly-report CLI 설치 확인
 
@@ -116,8 +117,8 @@ CLI 출력을 그대로 사용자에게 보여주지 말고, **각 항목을 주
 
 | 오류 메시지 | 조치 |
 | --- | --- |
-| `GitHub CLI (gh) is required` | `brew install gh` 실행 후 재시도 |
-| `jq is required` | `brew install jq` 실행 후 재시도 |
+| `GitHub CLI (gh) is required` | macOS는 `brew install gh`, Windows는 `winget install GitHub.cli` 또는 공식 설치 파일로 설치 후 재시도 |
+| `jq is required` | macOS는 `brew install jq`, Windows는 `winget install jqlang.jq` 또는 공식 설치 파일로 설치 후 재시도 |
 | `GitHub CLI is not authenticated` | `gh auth login` 실행 후 재시도 |
 | `해당 기간 커밋 없음` | 날짜 범위 확인. `--week 1`로 지난주 시도 |
 | `[경고] 결과가 N건 상한에 도달했습니다` | `--limit` 값을 올리거나 `--from`/`--to`로 범위를 좁힘 |

@@ -20,8 +20,17 @@ curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/instal
 
 ## 사전 요구사항
 
-- **gh CLI**: `brew install gh` 후 `gh auth login` 완료
-- **jq**: `brew install jq`
+- **Bash 실행 환경**
+  - macOS/Linux: 기본 터미널 또는 Bash
+  - Windows: Git Bash 또는 WSL 권장
+- **gh CLI**: 설치 후 `gh auth login` 완료
+  - macOS: `brew install gh`
+  - Windows: `winget install GitHub.cli` 또는 [cli.github.com](https://cli.github.com)
+- **jq**
+  - macOS: `brew install jq`
+  - Windows: `winget install jqlang.jq` 또는 [jq 다운로드](https://jqlang.github.io/jq/download/)
+
+> Windows에서는 PowerShell 단독 실행이 아니라 Git Bash/WSL처럼 Bash 스크립트를 실행할 수 있는 환경에서 사용하세요.
 
 ## 사용법
 
