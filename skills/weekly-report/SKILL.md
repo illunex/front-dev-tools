@@ -1,6 +1,6 @@
 ---
 name: weekly-report
-description: Use when the user asks to summarize weekly work, generate a weekly report, or organize commits. Korean triggers: "주간보고 정리해줘", "이번주 커밋 정리해줘", "주간 작업 내역 뽑아줘", "weekly report", "지난주 작업 정리", "이번주 뭐 했는지".
+description: 'Use when the user asks to summarize weekly work, generate a weekly report, or organize commits. Korean triggers: "주간보고 정리해줘", "이번주 커밋 정리해줘", "주간 작업 내역 뽑아줘", "weekly report", "지난주 작업 정리", "이번주 뭐 했는지".'
 ---
 
 # weekly-report

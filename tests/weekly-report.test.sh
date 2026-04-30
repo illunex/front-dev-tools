@@ -3,6 +3,10 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+if command -v ruby >/dev/null 2>&1; then
+  ruby -e 'require "psych"; text = File.read(ARGV.fetch(0)); yaml = text.split(/^---\s*$/, 3).fetch(1); Psych.safe_load(yaml)' "$ROOT_DIR/skills/weekly-report/SKILL.md"
+fi
+
 TEST_TMP="$(mktemp -d)"
 cleanup() {
   rm -rf "$TEST_TMP"
