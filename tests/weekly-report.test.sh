@@ -13,6 +13,8 @@ cleanup() {
 }
 trap cleanup EXIT
 
+REAL_JQ="$(command -v jq || true)"
+
 BIN_DIR="$TEST_TMP/bin"
 mkdir -p "$BIN_DIR"
 
@@ -29,14 +31,72 @@ if [[ "$1" == "api" && "$2" == "user" ]]; then
   exit 0
 fi
 
+if [[ "$1" == "search" && "$2" == "commits" ]]; then
+  cat <<'JSON'
+[
+  {
+    "repository": {"fullName": "illunex/my-project"},
+    "commit": {
+      "message": "feat: 직접 커밋 추가\n\nbody",
+      "committer": {"date": "2026-04-21T03:00:00Z"}
+    },
+    "parents": [{"sha": "parent"}],
+    "sha": "direct-sha"
+  }
+]
+JSON
+  exit 0
+fi
+
+if [[ "$1" == "search" && "$2" == "prs" ]]; then
+  cat <<'JSON'
+[
+  {
+    "repository": {"fullName": "illunex/my-project"},
+    "number": 17,
+    "closedAt": "2026-04-22T05:00:00Z"
+  }
+]
+JSON
+  exit 0
+fi
+
+if [[ "$1" == "pr" && "$2" == "view" ]]; then
+  cat <<'JSON'
+{
+  "mergedAt": "2026-04-22T05:00:00Z",
+  "commits": [
+    {
+      "oid": "pr-sha-1",
+      "messageHeadline": "feat: PR 포함 커밋 추가",
+      "committedDate": "2026-04-19T02:00:00Z"
+    },
+    {
+      "oid": "pr-sha-2",
+      "messageHeadline": "fix: PR 포함 버그 수정",
+      "committedDate": "2026-04-20T02:00:00Z"
+    }
+  ]
+}
+JSON
+  exit 0
+fi
+
 echo "unexpected gh call: $*" >&2
 exit 1
 STUB
 
-cat > "$BIN_DIR/jq" <<'STUB'
+if [[ -n "$REAL_JQ" ]]; then
+  cat > "$BIN_DIR/jq" <<STUB
+#!/bin/bash
+exec "$REAL_JQ" "\$@"
+STUB
+else
+  cat > "$BIN_DIR/jq" <<'STUB'
 #!/bin/bash
 exit 0
 STUB
+fi
 
 cat > "$BIN_DIR/date" <<'STUB'
 #!/bin/bash
@@ -103,9 +163,19 @@ assert_contains() {
 output="$(PATH="$BIN_DIR:$PATH" bash "$ROOT_DIR/scripts/weekly-report.sh" --dry-run)"
 assert_contains "$output" "Date range: 2026-04-20 .. 2026-04-26"
 assert_contains "$output" "Author: octocat"
+assert_contains "$output" "Command: gh search commits --author=octocat --committer-date=2026-04-20..2026-04-26 --sort=committer-date --order=asc --limit=200 --json repository,commit,parents,sha"
+assert_contains "$output" "Command: gh search prs --author=octocat --merged --merged-at=2026-04-20..2026-04-26 --limit=200 --json repository,number,closedAt"
 
 last_week_output="$(PATH="$BIN_DIR:$PATH" bash "$ROOT_DIR/scripts/weekly-report.sh" --week 1 --dry-run)"
 assert_contains "$last_week_output" "Date range: 2026-04-13 .. 2026-04-19"
+
+if [[ -n "$REAL_JQ" ]]; then
+  report_output="$(PATH="$BIN_DIR:$PATH" bash "$ROOT_DIR/scripts/weekly-report.sh" --from 2026-04-20 --to 2026-04-26)"
+  assert_contains "$report_output" "[illunex/my-project]"
+  assert_contains "$report_output" "- feat: 직접 커밋 추가 ~4/21 100%"
+  assert_contains "$report_output" "- feat: PR 포함 커밋 추가 ~4/22 100%"
+  assert_contains "$report_output" "- fix: PR 포함 버그 수정 ~4/22 100%"
+fi
 
 BSD_BIN_DIR="$TEST_TMP/bsd-bin"
 mkdir -p "$BSD_BIN_DIR"

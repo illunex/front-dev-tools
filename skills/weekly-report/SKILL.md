@@ -5,7 +5,7 @@ description: 'Use when the user asks to summarize weekly work, generate a weekly
 
 # weekly-report
 
-이번 주(또는 특정 주)에 GitHub에 커밋한 내역을 주간보고 포맷으로 정리합니다.
+이번 주(또는 특정 주)에 GitHub에 커밋한 내역과 기간 내 merge된 내가 연 PR의 포함 커밋을 주간보고 포맷으로 정리합니다.
 
 ## 사용 시점
 
@@ -31,6 +31,7 @@ description: 'Use when the user asks to summarize weekly work, generate a weekly
 - `100%`는 항상 리터럴 고정
 - merge / revert 커밋은 자동 제외
 - 같은 repo 내 동일 subject는 중복 제거
+- 직접 커밋은 커밋 날짜, merge된 PR의 포함 커밋은 PR merge 날짜로 표시
 
 ## Prerequisites
 
@@ -66,7 +67,7 @@ export PATH="$HOME/.local/bin:$PATH"
 | `--week <n>` | "지난주" → `1`, "이번주" → `0` | `0` |
 | `--from`, `--to` | 특정 날짜를 명시한 경우 사용 | 자동 계산(ISO week) |
 | `--author <login>` | 다른 사람의 내역 요청 시 지정 | 인증된 사용자 |
-| `--limit <n>` | 커밋이 많을 것으로 예상될 때 조정 | `200` |
+| `--limit <n>` | 직접 커밋 또는 merge된 PR이 많을 것으로 예상될 때 조정 | `200` |
 
 ## Step 3: 실행
 
@@ -83,6 +84,8 @@ weekly-report --from 2026-04-13 --to 2026-04-19
 # 다른 사용자
 weekly-report --author octocat
 ```
+
+CLI는 직접 커밋 검색 결과와, 같은 기간에 merge된 `--author` 사용자의 PR에 포함된 커밋을 함께 수집합니다.
 
 ## Step 4: 주간보고용 문장으로 재구성
 

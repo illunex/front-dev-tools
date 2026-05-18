@@ -1,6 +1,6 @@
 # weekly-report 설치 가이드
 
-GitHub 커밋 내역을 주간보고 포맷으로 자동 정리하는 CLI입니다.
+GitHub 커밋 내역과 최근 merge된 내 PR의 포함 커밋을 주간보고 포맷으로 자동 정리하는 CLI입니다.
 
 ## 설치
 
@@ -70,12 +70,15 @@ weekly-report --dry-run
 | `--from <YYYY-MM-DD>` | 시작일 (포함) | ISO week 월요일 |
 | `--to <YYYY-MM-DD>` | 종료일 (포함) | ISO week 일요일 |
 | `--author <login>` | 대상 GitHub 로그인 | 인증된 사용자 |
-| `-L, --limit <n>` | 최대 결과 수 | `200` |
+| `-L, --limit <n>` | 직접 커밋과 merge된 PR 조회별 최대 결과 수 | `200` |
 | `--dry-run` | 날짜 범위와 실행 명령만 출력 | - |
 
 ## 동작 방식
 
-- `gh search commits --author=<login> --committer-date=<from>..<to>` 로 커밋 조회
+- `gh search commits --author=<login> --committer-date=<from>..<to>` 로 직접 커밋 조회
+- `gh search prs --author=<login> --merged --merged-at=<from>..<to>` 로 기간 내 merge된 내 PR 조회
+- PR별 `gh pr view --json commits,mergedAt` 결과에서 포함 커밋을 추가 반영
 - merge 커밋(parent 2개 이상) 및 `Merge `·`Revert ` 로 시작하는 커밋 자동 제외
 - 같은 레포·같은 subject의 커밋은 중복 제거
-- 레포별로 그룹화, 커밋 날짜 오름차순 정렬
+- 직접 커밋은 커밋 날짜, PR 포함 커밋은 PR merge 날짜로 표시
+- 레포별로 그룹화, 날짜 오름차순 정렬

@@ -12,14 +12,14 @@ usage() {
   cat <<'EOF'
 Usage: weekly-report [options]
 
-Generate a weekly report from your GitHub commits.
+Generate a weekly report from your GitHub commits and recently merged PR commits.
 
 Options:
   -w, --week <n>           Weeks ago (0 = this week, 1 = last week). Default: 0
       --from <YYYY-MM-DD>  Start date inclusive. Overrides --week.
       --to   <YYYY-MM-DD>  End date inclusive. Overrides --week.
       --author <login>     GitHub login. Default: @me (authenticated user)
-  -L, --limit <n>          Max commits to fetch. Default: 200
+  -L, --limit <n>          Max commits and merged PRs to fetch per query. Default: 200
       --dry-run            Print date range and gh command, then exit
   -h, --help               Show this help
 
@@ -159,12 +159,18 @@ if [[ "$DRY_RUN" == "true" ]]; then
   echo "Date range: $FROM_DATE .. $TO_DATE"
   echo "Author: $AUTHOR"
   echo "Command: gh search commits --author=$AUTHOR --committer-date=${FROM_DATE}..${TO_DATE} --sort=committer-date --order=asc --limit=$LIMIT --json repository,commit,parents,sha"
+  echo "Command: gh search prs --author=$AUTHOR --merged --merged-at=${FROM_DATE}..${TO_DATE} --limit=$LIMIT --json repository,number,closedAt"
   exit 0
 fi
 
-TMP_FILE="$(mktemp)"
-cleanup() { rm -f "$TMP_FILE"; }
+TMP_DIR="$(mktemp -d)"
+cleanup() { rm -rf "$TMP_DIR"; }
 trap cleanup EXIT
+
+COMMITS_FILE="$TMP_DIR/commits.json"
+PRS_FILE="$TMP_DIR/prs.json"
+ITEMS_FILE="$TMP_DIR/items.jsonl"
+: > "$ITEMS_FILE"
 
 gh search commits \
   --author="$AUTHOR" \
@@ -172,14 +178,26 @@ gh search commits \
   --sort=committer-date \
   --order=asc \
   --limit="$LIMIT" \
-  --json repository,commit,parents,sha > "$TMP_FILE"
+  --json repository,commit,parents,sha > "$COMMITS_FILE"
 
-RESULT_COUNT=$(jq 'length' "$TMP_FILE")
-if [[ "$RESULT_COUNT" -ge "$LIMIT" ]]; then
+gh search prs \
+  --author="$AUTHOR" \
+  --merged \
+  --merged-at="${FROM_DATE}..${TO_DATE}" \
+  --limit="$LIMIT" \
+  --json repository,number,closedAt > "$PRS_FILE"
+
+COMMIT_RESULT_COUNT=$(jq 'length' "$COMMITS_FILE")
+if [[ "$COMMIT_RESULT_COUNT" -ge "$LIMIT" ]]; then
   echo "[경고] 결과가 ${LIMIT}건 상한에 도달했습니다. --from/--to로 범위를 좁히거나 --limit을 높여 재시도하세요." >&2
 fi
 
-OUTPUT=$(jq -r '
+PR_RESULT_COUNT=$(jq 'length' "$PRS_FILE")
+if [[ "$PR_RESULT_COUNT" -ge "$LIMIT" ]]; then
+  echo "[경고] merge된 PR 결과가 ${LIMIT}건 상한에 도달했습니다. --from/--to로 범위를 좁히거나 --limit을 높여 재시도하세요." >&2
+fi
+
+jq -c '
   map(
     select(
       (.parents | length) < 2 and
@@ -190,8 +208,47 @@ OUTPUT=$(jq -r '
   map({
     repo: .repository.fullName,
     subject: (.commit.message | split("\n")[0] | gsub("^\\s+|\\s+$"; "")),
+    dateKey: (.commit.committer.date | split("T")[0]),
     date: (.commit.committer.date | split("T")[0] | split("-") | "\(.[1] | tonumber)/\(.[2] | tonumber)")
-  }) |
+  })[] |
+  select(.subject != "")
+' "$COMMITS_FILE" >> "$ITEMS_FILE"
+
+while IFS=$'\t' read -r repo number; do
+  if [[ -z "$repo" || -z "$number" ]]; then
+    continue
+  fi
+
+  PR_DETAIL_FILE="$TMP_DIR/pr-${repo//\//-}-${number}.json"
+  if ! gh pr view "$number" \
+    --repo "$repo" \
+    --json commits,mergedAt > "$PR_DETAIL_FILE"; then
+    echo "[경고] ${repo}#${number} PR 커밋 조회에 실패해 건너뜁니다." >&2
+    continue
+  fi
+
+  jq -c --arg repo "$repo" '
+    .mergedAt as $mergedAt |
+    (.commits // [])[] |
+    {
+      repo: $repo,
+      subject: ((.messageHeadline // .commit.messageHeadline // .message // "") | split("\n")[0] | gsub("^\\s+|\\s+$"; "")),
+      dateKey: ($mergedAt | split("T")[0]),
+      date: ($mergedAt | split("T")[0] | split("-") | "\(.[1] | tonumber)/\(.[2] | tonumber)")
+    } |
+    select(.dateKey != null) |
+    select(.subject != "")
+  ' "$PR_DETAIL_FILE" >> "$ITEMS_FILE"
+done < <(jq -r '.[] | [.repository.fullName, .number] | @tsv' "$PRS_FILE")
+
+OUTPUT=$(jq -s -r '
+  map(
+    select(
+      (.subject | startswith("Merge ") | not) and
+      (.subject | startswith("Revert ") | not)
+    )
+  ) |
+  sort_by(.repo, .dateKey, .subject) |
   reduce .[] as $item (
     {seen: {}, items: []};
     if (.seen[$item.repo + "|" + $item.subject] | not) then
@@ -207,7 +264,7 @@ OUTPUT=$(jq -r '
     (map("- " + .subject + " ~" + .date + " 100%") | join("\n"))
   ) |
   join("\n\n")
-' "$TMP_FILE")
+' "$ITEMS_FILE")
 
 if [[ -z "$OUTPUT" ]]; then
   echo "해당 기간($FROM_DATE ~ $TO_DATE) 커밋 없음"

@@ -39,7 +39,7 @@ curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/instal
 
 ### `weekly-report`
 
-이번 주(또는 특정 주) GitHub 커밋 내역을 주간보고 포맷으로 정리하는 CLI입니다.
+이번 주(또는 특정 주) GitHub 커밋 내역과 기간 내 merge된 내 PR의 포함 커밋을 주간보고 포맷으로 정리하는 CLI입니다.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/install/install-weekly-report.sh | bash
