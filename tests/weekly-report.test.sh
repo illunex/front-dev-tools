@@ -52,7 +52,7 @@ if [[ "$1" == "search" && "$2" == "prs" ]]; then
   cat <<'JSON'
 [
   {
-    "repository": {"fullName": "illunex/my-project"},
+    "repository": {"name": "my-project", "nameWithOwner": "illunex/my-project"},
     "number": 17,
     "closedAt": "2026-04-22T05:00:00Z"
   }

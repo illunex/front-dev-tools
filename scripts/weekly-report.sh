@@ -239,7 +239,7 @@ while IFS=$'\t' read -r repo number; do
     select(.dateKey != null) |
     select(.subject != "")
   ' "$PR_DETAIL_FILE" >> "$ITEMS_FILE"
-done < <(jq -r '.[] | [.repository.fullName, .number] | @tsv' "$PRS_FILE")
+done < <(jq -r '.[] | [(.repository.fullName // .repository.nameWithOwner), .number] | @tsv' "$PRS_FILE")
 
 OUTPUT=$(jq -s -r '
   map(
