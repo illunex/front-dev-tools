@@ -57,3 +57,4 @@
 | 브랜치 생성·네이밍 | `company-branch` |
 | PR 제목·본문 작성 | `company-pr` |
 | 새 파일·컴포넌트 위치 결정 | `company-folder-structure` |
+| 컴포넌트 리팩토링·구조 정리(inline 분리·type.ts 분리·단독 컴포넌트 재배치·constants/utils 정리) | `company-component-refactor` |

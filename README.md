@@ -53,6 +53,14 @@ curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/instal
 
 Claude Code · Codex · Cursor에 회사 공통 개발 컨벤션을 설치합니다.
 
+상시 로드되는 기본 규칙(답변 언어·pnpm·TypeScript)과 작업 시점에 참조되는 skill로 구성됩니다.
+
+- `company-commit` — 커밋 메시지(Conventional Commits 한국어 명사형)
+- `company-branch` — 브랜치 네이밍
+- `company-pr` — PR 제목·본문 템플릿
+- `company-folder-structure` — Next.js App Router + Feature based 폴더 구조(새 파일 배치)
+- `company-component-refactor` — 컴포넌트 리팩토링·구조 정리(inline 분리·`type.ts` 분리·단독 컴포넌트 재배치·중복 constants/utils 정리)
+
 ```bash
 # 전체 설치
 curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/install/install-conventions.sh | bash -s -- --force
@@ -99,6 +107,8 @@ npx skills add illunex/front-dev-tools
 │   │       │   └── SKILL.md
 │   │       ├── company-commit/
 │   │       │   └── SKILL.md
+│   │       ├── company-component-refactor/
+│   │       │   └── SKILL.md
 │   │       ├── company-folder-structure/
 │   │       │   └── SKILL.md
 │   │       └── company-pr/
@@ -110,12 +120,15 @@ npx skills add illunex/front-dev-tools
 │   │       │   └── SKILL.md
 │   │       ├── company-commit/
 │   │       │   └── SKILL.md
+│   │       ├── company-component-refactor/
+│   │       │   └── SKILL.md
 │   │       ├── company-folder-structure/
 │   │       │   └── SKILL.md
 │   │       └── company-pr/
 │   │           └── SKILL.md
 │   ├── cursor/
-│   │   └── company.mdc
+│   │   ├── company.mdc
+│   │   └── company-component-refactor.mdc
 │   └── shared/
 │       ├── conventions.md
 │       └── structure.md
