@@ -136,6 +136,7 @@ if [[ "$INSTALL_CLAUDE" == "true" ]]; then
   install_file "conventions/claude/skills/company-branch/SKILL.md" "$HOME/.claude/skills/company-branch/SKILL.md"
   install_file "conventions/claude/skills/company-pr/SKILL.md" "$HOME/.claude/skills/company-pr/SKILL.md"
   install_file "conventions/claude/skills/company-folder-structure/SKILL.md" "$HOME/.claude/skills/company-folder-structure/SKILL.md"
+  install_file "conventions/claude/skills/company-component-refactor/SKILL.md" "$HOME/.claude/skills/company-component-refactor/SKILL.md"
 fi
 
 if [[ "$INSTALL_CODEX" == "true" ]]; then
@@ -144,10 +145,12 @@ if [[ "$INSTALL_CODEX" == "true" ]]; then
   install_file "conventions/codex/skills/company-branch/SKILL.md" "$HOME/.codex/skills/company-branch/SKILL.md"
   install_file "conventions/codex/skills/company-pr/SKILL.md" "$HOME/.codex/skills/company-pr/SKILL.md"
   install_file "conventions/codex/skills/company-folder-structure/SKILL.md" "$HOME/.codex/skills/company-folder-structure/SKILL.md"
+  install_file "conventions/codex/skills/company-component-refactor/SKILL.md" "$HOME/.codex/skills/company-component-refactor/SKILL.md"
 fi
 
 if [[ "$INSTALL_CURSOR" == "true" ]]; then
   install_file "conventions/cursor/company.mdc" "$HOME/.cursor/rules/company.mdc"
+  install_file "conventions/cursor/company-component-refactor.mdc" "$HOME/.cursor/rules/company-component-refactor.mdc"
 fi
 
 if [[ "$DRY_RUN" == "true" ]]; then
