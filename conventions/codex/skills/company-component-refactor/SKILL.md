@@ -74,14 +74,14 @@ description: 특정 페이지/도메인 컴포넌트 구조를 전수조사해 i
 
 - **정배:** `features/{feature}/components/{Component}/`는 `index.tsx` + `type.ts`로 구성하고, 스타일이 필요하면 `style.ts`를 더한다. 그 컴포넌트의 props·로컬 타입은 `type.ts`에 두고, `index.tsx`에서는 `import * as T from "./type"` 형태로 사용한다.
 - **빈 style 파일 금지:** 따로 스타일을 입힐 필요가 없으면 `style.ts`는 생략한다. `export {}`만 있는 빈 style 파일은 만들지 않는다.
-- **디렉토리 깊이 2단계 제한:** `components/` 아래 디렉토리는 **두 단계까지만** 둔다. `components/{Component}/`(1단계)와 `components/{Component}/{Sub}/`(2단계)는 허용하지만, 그 아래 또 디렉토리를 파는 3단계 중첩(`components/{Component}/{Sub}/{SubSub}/`)은 만들지 않는다. 3단계로 더 내려가야 하는 하위 컴포넌트는 2단계 디렉토리 **안에 파일로**(예: `{SubSub}.tsx`) 두거나, 사소하면 inline 유지한다. type/constants/utils 분리 기준은 컴포넌트가 중첩돼 있어도 동일하게 적용하되, 디렉토리 깊이만 2단계로 제한한다. **깊이를 늘리는 것은 분량·복잡도가 정당화할 때만**이며, 양이 적으면 굳이 깊게 파지 않는다.
+- **디렉토리 깊이 2단계 제한:** `components/` 아래 디렉토리는 **두 단계까지만** 둔다. `components/{Component}/`(1단계)와 `components/{Component}/{Sub}/`(2단계)는 허용하지만, 그 아래 또 디렉토리를 파는 3단계 중첩(`components/{Component}/{Sub}/{SubSub}/`)은 만들지 않는다. **모든 컴포넌트는 `디렉토리/index.tsx` 구조이며 `{SubSub}.tsx` 같은 단독 파일은 두지 않는다.** 따라서 3단계가 될 하위 컴포넌트(손자)는 2단계 디렉토리 안에 파일로 두는 게 아니라, **최상위 컴포넌트의 직속 sub(`components/{Component}/{SubSub}/index.tsx`)로 평탄화**하거나, 사소하면 inline 유지한다. type/constants/utils 분리 기준은 컴포넌트가 중첩돼 있어도 동일하게 적용하되, 디렉토리 깊이만 2단계로 제한한다. **깊이를 늘리는 것은 분량·복잡도가 정당화할 때만**이며, 양이 적으면 굳이 깊게 파지 않는다.
 - **중복 타입 묶음:** 하위 컴포넌트들(중첩 포함)에서 여러 번 중복되는 타입은 `features/{feature}/types/` 디렉토리에 **용도별 `.ts` 파일**(용도/로직이 같은 타입끼리 묶음)로 분리해 재사용한다.
 - 단일 컴포넌트 전용 타입을 `types/`로 올리지 않는다. 반대로 여러 컴포넌트가 공유하는 타입을 각 `type.ts`에 중복 정의하지 않는다.
 
 ### 단독 사용 컴포넌트 재배치 (디렉토리 2단계 제한)
 
 - `components/` 아래 디렉토리는 **두 단계까지만** 둔다(`{Component}/{Sub}/`까지 허용, `{Component}/{Sub}/{SubSub}/` 3단계 금지).
-- 사용처가 1곳이면 루트 `components`에 방치하지 말고 실제 사용하는 부모 컴포넌트 디렉토리 하위로 옮긴다. 단 2단계를 넘겨야 하면 디렉토리를 더 파지 말고 그 자리에 **파일로**(사소하면 inline) 둔다.
+- 사용처가 1곳이면 루트 `components`에 방치하지 말고 실제 사용하는 부모 컴포넌트 디렉토리 하위로 옮긴다. 단 이 이동이 3단계를 만든다면 디렉토리를 더 파거나 파일로 두지 말고, **최상위 컴포넌트의 직속 sub(`{Component}/{SubSub}/index.tsx`)로 평탄화**(사소하면 inline)한다.
 - 사용처가 2곳 이상이면 **가장 가까운 공통 조상** 하위(2단계 한도 내)로 옮긴다. 서로 다른 라우트(페이지)에 걸치면 common으로 승격(「constants/utils 위치」 준용).
 
 ### 훅 추출 (다중 호출·파생 가공·브라우저 통신 로직)
