@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 if command -v ruby >/dev/null 2>&1; then
-  ruby -e 'require "psych"; text = File.read(ARGV.fetch(0)); yaml = text.split(/^---\s*$/, 3).fetch(1); Psych.safe_load(yaml)' "$ROOT_DIR/skills/weekly-report/SKILL.md"
+  ruby -E UTF-8:UTF-8 -e 'require "psych"; text = File.read(ARGV.fetch(0), encoding: "UTF-8"); yaml = text.split(/^---\s*$/, 3).fetch(1); Psych.safe_load(yaml)' "$ROOT_DIR/skills/weekly-report/SKILL.md"
 fi
 
 assert_skill_rule() {
@@ -26,6 +26,11 @@ assert_skill_rule '전주 대비 증가 폭이 `0~10%p`이거나 진행률이 �
 assert_skill_rule '`기획 변경`, `API 변경`, `디자인 변경`'
 assert_skill_rule '결제 내역 화면 개발(API 대기중)'
 assert_skill_rule '정산 화면 개발(기획 변경 반영)'
+assert_skill_rule '현재 주간보고의 모든 항목에 작업일을 `~M/D`로 표시'
+assert_skill_rule '`~M/D`가 없으면 CLI 원본에서 해당 업무의 가장 마지막 작업일을 복원합니다.'
+assert_skill_rule '작업일을 예상 종료일이나 보고 생성일로 대체하지 않습니다.'
+assert_skill_rule '예상 종료일 답변을 받기 전에는 차주 주간보고를 확정하거나 날짜 없는 차주 항목을 출력하지 않습니다.'
+assert_skill_rule '하나라도 누락되면 차주 보고를 확정하지 않고 누락된 항목의 종료일만 다시 질문합니다.'
 
 bash -n "$ROOT_DIR/install/install-weekly-report.sh"
 installer_help="$(bash "$ROOT_DIR/install/install-weekly-report.sh" --help)"
@@ -187,6 +192,18 @@ assert_contains() {
   fi
 }
 
+assert_report_items_have_dates() {
+  local report="$1"
+  local invalid_items
+
+  invalid_items="$(printf '%s\n' "$report" | awk '/^- / && $0 !~ / ~[0-9]+\/[0-9]+ [0-9]+%$/')"
+  if [[ -n "$invalid_items" ]]; then
+    echo "Expected every report item to include ~M/D and progress:" >&2
+    echo "$invalid_items" >&2
+    exit 1
+  fi
+}
+
 output="$(PATH="$BIN_DIR:$PATH" bash "$ROOT_DIR/scripts/weekly-report.sh" --dry-run)"
 assert_contains "$output" "Date range: 2026-04-20 .. 2026-04-26"
 assert_contains "$output" "Author: octocat"
@@ -202,6 +219,7 @@ if [[ -n "$REAL_JQ" ]]; then
   assert_contains "$report_output" "- feat: 직접 커밋 추가 ~4/21 100%"
   assert_contains "$report_output" "- feat: PR 포함 커밋 추가 ~4/22 100%"
   assert_contains "$report_output" "- fix: PR 포함 버그 수정 ~4/22 100%"
+  assert_report_items_have_dates "$report_output"
 fi
 
 BSD_BIN_DIR="$TEST_TMP/bsd-bin"
