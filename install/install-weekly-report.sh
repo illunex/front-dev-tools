@@ -6,6 +6,7 @@ REF="${WEEKLY_REPORT_REF:-main}"
 BIN_DIR="${WEEKLY_REPORT_BIN_DIR:-$HOME/.local/bin}"
 COMMAND_NAME="${WEEKLY_REPORT_COMMAND_NAME:-weekly-report}"
 INSTALL_CLAUDE=false
+INSTALL_CURSOR=false
 INSTALL_CODEX=false
 INSTALL_ALL=true
 
@@ -17,6 +18,7 @@ Install the weekly-report command and AI skills.
 
 Options:
   --claude              Install Claude Code skill only
+  --cursor              Install Cursor skill only
   --codex               Install Codex skill only
   --repo <owner/repo>   Source GitHub repository. Default: $SOURCE_REPO
   --ref <git-ref>       Branch, tag, or commit to install from. Default: $REF
@@ -27,6 +29,7 @@ Options:
 
 Examples:
   bash install-weekly-report.sh
+  bash install-weekly-report.sh --cursor
   bash install-weekly-report.sh --codex
   bash install-weekly-report.sh --ref v1.0.0
 EOF
@@ -41,6 +44,11 @@ while [[ $# -gt 0 ]]; do
       ;;
     --codex)
       INSTALL_CODEX=true
+      INSTALL_ALL=false
+      shift
+      ;;
+    --cursor)
+      INSTALL_CURSOR=true
       INSTALL_ALL=false
       shift
       ;;
@@ -63,6 +71,7 @@ while [[ $# -gt 0 ]]; do
     --no-skills)
       INSTALL_ALL=false
       INSTALL_CLAUDE=false
+      INSTALL_CURSOR=false
       INSTALL_CODEX=false
       shift
       ;;
@@ -80,6 +89,7 @@ done
 
 if [[ "$INSTALL_ALL" == "true" ]]; then
   INSTALL_CLAUDE=true
+  INSTALL_CURSOR=true
   INSTALL_CODEX=true
 fi
 
@@ -112,6 +122,10 @@ install_skill() {
 
 if [[ "$INSTALL_CLAUDE" == "true" ]]; then
   install_skill "$HOME/.claude/skills/weekly-report"
+fi
+
+if [[ "$INSTALL_CURSOR" == "true" ]]; then
+  install_skill "$HOME/.cursor/skills/weekly-report"
 fi
 
 if [[ "$INSTALL_CODEX" == "true" ]]; then
