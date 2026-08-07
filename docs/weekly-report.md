@@ -14,6 +14,9 @@ AI 스킬만 선택 설치:
 # Claude Code만
 curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/install/install-weekly-report.sh | bash -s -- --claude
 
+# Cursor만
+curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/install/install-weekly-report.sh | bash -s -- --cursor
+
 # Codex만
 curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/install/install-weekly-report.sh | bash -s -- --codex
 ```
@@ -61,6 +64,8 @@ weekly-report --dry-run
 [illunex/design-system]
 - chore: 버튼 컴포넌트 리팩터 ~4/23 100%
 ```
+
+완료 근거가 부족하거나 진행 중인 항목은 AI가 완성도를 추정해 10% 단위의 `100%` 미만 진행률로 표시하며, 미착수 항목은 `0%`로 표시합니다. 미완료 항목이 있으면 항목별 예상 종료일을 질문하고, `0%` 항목에는 기획·디자인·API 대기 등의 미착수 사유를 입력받습니다. 전주 보고가 제공된 경우 진행률 증가가 `0~10%p`이거나 감소한 미완료 항목에는 기획·API·디자인 변경 등의 변동 사유도 입력받습니다. 입력한 사유는 `결제 내역 화면 개발(API 대기중)`처럼 항목명 뒤 괄호에 반영합니다. 질문은 Claude Code·Cursor·Codex에서 동일하게 사용할 수 있는 번호형 일반 텍스트 형식을 사용합니다.
 
 ## 옵션
 

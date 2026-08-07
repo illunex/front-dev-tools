@@ -7,6 +7,33 @@ if command -v ruby >/dev/null 2>&1; then
   ruby -e 'require "psych"; text = File.read(ARGV.fetch(0)); yaml = text.split(/^---\s*$/, 3).fetch(1); Psych.safe_load(yaml)' "$ROOT_DIR/skills/weekly-report/SKILL.md"
 fi
 
+assert_skill_rule() {
+  local needle="$1"
+  if ! grep -Fq "$needle" "$ROOT_DIR/skills/weekly-report/SKILL.md"; then
+    echo "Expected skill rule to contain: $needle" >&2
+    exit 1
+  fi
+}
+
+assert_skill_rule '`100%` 미만 항목이 하나라도 있으면 차주 주간보고도 반드시 함께 제공합니다.'
+assert_skill_rule '한 항목당 하나의 질문을 제공합니다.'
+assert_skill_rule 'Claude Code·Cursor·Codex'
+assert_skill_rule '반드시 10% 단위로 표시하고, 1% 단위의 정밀한 수치는 사용하지 않습니다.'
+assert_skill_rule '`[미완료 판단 근거]`를 추가하고'
+assert_skill_rule '미착수 항목은 `0%`로 표시'
+assert_skill_rule '`기획 대기`, `디자인 대기`, `API 대기`'
+assert_skill_rule '전주 대비 증가 폭이 `0~10%p`이거나 진행률이 감소한 항목'
+assert_skill_rule '`기획 변경`, `API 변경`, `디자인 변경`'
+assert_skill_rule '결제 내역 화면 개발(API 대기중)'
+assert_skill_rule '정산 화면 개발(기획 변경 반영)'
+
+bash -n "$ROOT_DIR/install/install-weekly-report.sh"
+installer_help="$(bash "$ROOT_DIR/install/install-weekly-report.sh" --help)"
+if [[ "$installer_help" != *'--cursor'* ]]; then
+  echo 'Expected installer help to include --cursor' >&2
+  exit 1
+fi
+
 TEST_TMP="$(mktemp -d)"
 cleanup() {
   rm -rf "$TEST_TMP"
