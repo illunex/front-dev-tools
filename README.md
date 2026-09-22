@@ -39,7 +39,7 @@ curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/instal
 
 ### `weekly-report`
 
-이번 주(또는 특정 주) GitHub 커밋 내역과 기간 내 merge된 내 PR의 포함 커밋을 주간보고 포맷으로 정리하는 CLI입니다.
+이번 주(또는 특정 주) GitHub 커밋 내역과 기간 내 merge된 내 PR의 포함 커밋을 수집해, 프로젝트(HTML head 타이틀) → 큰 업무 → 중간 업무 → 상세 업무 3단계 주간보고로 정리하는 CLI입니다. 계층형 텍스트 외에 팀 취합본을 위한 고정 포맷 HTML 표(`skills/weekly-report/assets/report-table-template.html`)도 함께 생성합니다.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/install/install-weekly-report.sh | bash
@@ -83,7 +83,7 @@ AI 개발 도구에서 바로 사용할 수 있는 skill이 포함되어 있습�
 
 - [`skills/sync-env`](./skills/sync-env/SKILL.md) — GitHub Actions 환경변수를 로컬 `.env` 파일로 동기화
 - [`skills/create-company-frontend`](./skills/create-company-frontend/SKILL.md) — 공식 generator 기반 회사 표준 React/Next 보일러플레이트 생성
-- [`skills/weekly-report`](./skills/weekly-report/SKILL.md) — GitHub 커밋 내역을 주간보고 포맷으로 정리
+- [`skills/weekly-report`](./skills/weekly-report/SKILL.md) — GitHub 커밋 내역을 3단계 계층형 주간보고 포맷 또는 고정 포맷 HTML 표로 정리
 
 ### Skills 설치
 
@@ -152,5 +152,7 @@ npx skills add illunex/front-dev-tools
     ├── sync-env/
     │   └── SKILL.md
     └── weekly-report/
-        └── SKILL.md
+        ├── SKILL.md
+        └── assets/
+            └── report-table-template.html
 ```
