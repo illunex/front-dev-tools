@@ -1,0 +1,424 @@
+<!-- 주차별로 제목·기간만 바꿔 쓰는 주간보고 표 템플릿 -->
+<title>주간보고</title>
+<style>
+  :root {
+    color-scheme: light;
+    --paper: #f2f4f7;
+    --surface: #ffffff;
+    --surface-alt: #f8fafc;
+    --line: #dce2ea;
+    --line-soft: #e9edf3;
+    --ink: #161b22;
+    --ink-soft: #3b4653;
+    --muted: #616d7e;
+    --accent: #18548a;
+    --accent-soft: #e4edf7;
+    --ok: #1c6742;
+    --ok-soft: #e2f0e8;
+    --warn: #8f5400;
+    --warn-soft: #fbeeda;
+  }
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding-inline: 16px;
+    padding-block: 32px 56px;
+  }
+
+  header.page {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 16px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 8px;
+  }
+  header.page h1 {
+    margin: 0;
+    font-size: clamp(22px, 4vw, 30px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+  .period {
+    font-size: 13px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    margin: 14px 0 22px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .legend b { color: var(--ink-soft); font-weight: 600; }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .toolbar button {
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--surface);
+    background: var(--accent);
+    border: none;
+    border-radius: 3px;
+    padding: 7px 14px;
+    cursor: pointer;
+  }
+  .toolbar button:hover { background: #13446f; }
+  .toolbar button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  #copy-msg { font-size: 12px; color: var(--muted); }
+
+  .tablebox {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+
+  .notes {
+    margin-top: 28px;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  .note {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: 3px;
+    padding: 14px 16px;
+  }
+  .note.ask { border-left-color: var(--warn); }
+  .note h2 {
+    margin: 0 0 8px;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .note ul { margin: 0; padding-left: 18px; }
+  .note li + li { margin-top: 6px; }
+  .note li { color: var(--ink-soft); }
+  .note code {
+    font-size: 12px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+</style>
+
+<div class="wrap">
+  <header class="page">
+    <h1>N월 N주 주간보고</h1>
+    <span class="period" id="meta"></span>
+  </header>
+
+  <div class="legend">
+    <span><b>큰 업무</b> 고정 어휘 7종</span>
+    <span><b>◦</b> 중간 업무 (화면·모듈 단위)</span>
+    <span><b>:</b> 상세 업무</span>
+    <span><b>~M/D</b> 완료일 또는 예상 종료일</span>
+    <span><b>진행률 강조</b> 대분류 뱃지 › 중분류 굵게 › 소분류 일반</span>
+  </div>
+
+  <div class="toolbar">
+    <button type="button" id="copy">표 HTML 복사</button>
+    <span id="copy-msg">표 안쪽은 전부 인라인 스타일이라 다른 도메인에 붙여 넣어도 그대로 보입니다.</span>
+  </div>
+
+  <div class="tablebox">
+    <table id="report-table">
+      <thead>
+        <tr>
+          <th scope="col">프로젝트명</th>
+          <th scope="col">담당자</th>
+          <th scope="col">금주 업무</th>
+          <th scope="col">차주 업무</th>
+          <th scope="col">이슈사항</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <div class="notes">
+    <section class="note ask">
+      <h2>일정 미확정 항목</h2>
+      <ul>
+        <li>예상 종료일이나 진행률을 확인하지 못한 항목을 한 줄씩 적는다. 없으면 이 섹션을 지운다.</li>
+      </ul>
+    </section>
+    <section class="note">
+      <h2>미완료 판단 근거</h2>
+      <ul>
+        <li>100% 미만 큰 업무마다 왜 완료가 아닌지 한 줄로 적는다.</li>
+      </ul>
+    </section>
+    <section class="note">
+      <h2>표기 정리 기준</h2>
+      <ul>
+        <li>프로젝트명 표기 통일, 큰 업무 배정이 갈린 항목, 내부 용어 치환 등 판단 근거를 적는다.</li>
+      </ul>
+    </section>
+  </div>
+</div>
+
+<script>
+  // 보고 대상 주. 헤더에 그대로 노출된다.
+  const PERIOD = "YYYY-MM-DD – MM-DD";
+
+  // [담당자, [[프로젝트명, 금주 큰업무[], 차주 큰업무[], 이슈사항[]], ...]]
+  // 큰 업무 = [이름, 날짜, 진행률, 중간업무[]]
+  //   날짜: "9/18" → ~9/18 / "상시 진행" 같은 문자열 → 그대로 / null → 종료일 미정
+  // 중간 업무 = [이름, 진행률, 상세업무[]]
+  // 상세 업무 = [이름, 진행률]
+  // 상세가 한 줄뿐이면 상세 배열을 비우고 중간 업무명에 합친다.
+  // 이슈사항 = 문장 문자열 배열. 없으면 []로 두면 "확인된 이슈 없음"으로 렌더링된다.
+  //   대상: 운영 장애, 반복 수정으로 원인 수렴이 안 된 건, 보안·의존성 경고,
+  //   임시 대응, 외부(타 팀·타 레포·기획) 대기 요인 등 Step 12 기준을 따른다.
+  const DATA = [
+    ["홍길동", [
+      ["Stock Link", [
+        ["퍼블리싱", "9/17", 100, [
+          ["종목 상세 페이지", 100, [
+            ["차트 영역 마크업 및 스타일 적용", 100],
+            ["반응형 레이아웃 대응", 100]
+          ]]
+        ]],
+        ["API 연결", "9/18", 50, [
+          ["종목 상세 페이지", 50, [
+            ["시세 조회 연동 및 응답 처리", 100],
+            ["로딩·에러 상태 처리", 0]
+          ]]
+        ]]
+      ], [
+        ["API 연결", "9/26", 50, [
+          ["종목 상세 페이지 로딩·에러 상태 처리", 0, []]
+        ]],
+        ["버그 수정", "상시 진행", 0, [
+          ["이슈 대응(프로젝트 종료 시까지 상시)", 0, []]
+        ]]
+      ], [
+        "종목 상세 로딩·에러 처리가 한 주 안에서 두 차례 수정돼 원인 수렴 여부 후속 확인 필요"
+      ]]
+    ]],
+
+    ["김철수", [
+      ["Admin Console", [
+        ["기능개발", "9/19", 90, [
+          ["회원 관리 페이지 권한 편집 처리 추가", 90, []]
+        ]]
+      ], [], []]
+    ]]
+  ];
+
+  const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  // 표는 다른 도메인에 그대로 붙여 넣을 수 있어야 하므로 클래스·CSS 변수를 쓰지 않고
+  // 모든 색·여백을 리터럴 값 인라인 스타일로 직접 찍는다.
+  // font-family는 넣지 않는다. 따옴표가 든 폰트명을 style="" 속성值 안에 그대로 넣으면
+  // 속성의 큰따옴표와 충돌해 그 뒤 인라인 스타일이 전부 깨진다. 붙여 넣는 쪽 기본 폰트를 그대로 따른다.
+  const S = {
+    table: "border-collapse:collapse;width:100%;min-width:840px;"
+      + "font-size:14px;line-height:1.55;color:#161b22;background:#ffffff;",
+    th: "text-align:left;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;"
+      + "color:#616d7e;padding:11px 14px;background:#f8fafc;border-bottom:1px solid #dce2ea;white-space:nowrap;",
+    td: "vertical-align:top;padding:14px;border-bottom:1px solid #e9edf3;",
+    tdTop: "border-top:1px solid #dce2ea;",
+    project: "width:168px;background:#f8fafc;border-right:1px solid #e9edf3;",
+    owner: "width:84px;font-weight:600;white-space:nowrap;",
+    now: "width:38%;",
+    next: "width:20%;",
+    issues: "width:20%;",
+    pname: "font-weight:600;color:#18548a;",
+    count: "display:block;margin-top:3px;font-size:11px;font-weight:400;color:#616d7e;",
+    big: "display:block;",
+    bigGap: "margin-top:14px;",
+    bigNext: "display:block;padding:10px 12px;background:#fbeeda;border-radius:3px;",
+    bigHead: "padding-bottom:4px;border-bottom:1px dashed #dce2ea;",
+    bigName: "font-weight:600;",
+    mids: "margin:6px 0 0;padding:0;list-style:none;",
+    mid: "margin-top:7px;",
+    midHead: "color:#3b4653;",
+    bullet: "color:#616d7e;",
+    dets: "margin:3px 0 0 14px;padding:0 0 0 10px;list-style:none;border-left:1px solid #dce2ea;",
+    det: "color:#616d7e;font-size:13px;",
+    // 진행률 강조는 계층 깊이에 따라 단계적으로 약해진다.
+    // 대분류 = 뱃지, 중분류 = 굵은 글씨, 소분류 = 일반 글씨.
+    pctBadgeOk: "display:inline-block;font-size:11.5px;font-weight:600;"
+      + "font-variant-numeric:tabular-nums;padding:1px 6px;border-radius:3px;background:#e2f0e8;color:#1c6742;",
+    pctBadgePart: "display:inline-block;font-size:11.5px;font-weight:600;"
+      + "font-variant-numeric:tabular-nums;padding:1px 6px;border-radius:3px;background:#fbeeda;color:#8f5400;",
+    pctBoldOk: "font-size:11.5px;font-weight:700;"
+      + "font-variant-numeric:tabular-nums;color:#1c6742;",
+    pctBoldPart: "font-size:11.5px;font-weight:700;"
+      + "font-variant-numeric:tabular-nums;color:#8f5400;",
+    pctPlainOk: "font-size:11.5px;font-weight:400;"
+      + "font-variant-numeric:tabular-nums;color:#1c6742;",
+    pctPlainPart: "font-size:11.5px;font-weight:400;"
+      + "font-variant-numeric:tabular-nums;color:#8f5400;",
+    date: "font-size:11.5px;font-variant-numeric:tabular-nums;color:#616d7e;",
+    dateTbd: "font-size:11.5px;color:#8f5400;",
+    none: "color:#616d7e;font-size:13px;",
+    issuesList: "margin:0;padding:0;list-style:none;",
+    issueItem: "display:flex;gap:6px;align-items:baseline;color:#3b4653;font-size:13px;",
+    issueItemGap: "margin-top:5px;",
+    issueBullet: "flex:none;color:#8f5400;"
+  };
+
+  // level 1 = 대분류(뱃지), 2 = 중분류(굵게), 3 = 소분류(일반)
+  const PCT_STYLE = {
+    1: [S.pctBadgeOk, S.pctBadgePart],
+    2: [S.pctBoldOk, S.pctBoldPart],
+    3: [S.pctPlainOk, S.pctPlainPart]
+  };
+  const pct = (n, level) =>
+    '<span style="' + PCT_STYLE[level][n < 100 ? 1 : 0] + '">' + n + "%</span>";
+
+  function bigBlock(b, i, isNext) {
+    const [name, date, p, mids] = b;
+    // 숫자로 시작하면 날짜(~M/D), 문자열이면 "상시 진행" 같은 상태 표기, 없으면 미정
+    const dateHtml = !date
+      ? '<span style="' + S.dateTbd + '">종료일 미정</span>'
+      : /^\d/.test(date)
+        ? '<span style="' + S.date + '">~' + esc(date) + "</span>"
+        : '<span style="' + S.date + '">' + esc(date) + "</span>";
+    const box = (isNext ? S.bigNext : S.big) + (i > 0 ? S.bigGap : "");
+    let html = '<div style="' + box + '"><div style="' + S.bigHead + '"><span style="'
+      + S.bigName + '">' + esc(name) + "</span> " + dateHtml + " " + pct(p, 1) + "</div>";
+    html += '<ul style="' + S.mids + '">';
+    mids.forEach(([mname, mp, dets], mi) => {
+      html += '<li style="' + (mi > 0 ? S.mid : "") + '"><div style="' + S.midHead
+        + '"><span style="' + S.bullet + '">◦</span> ' + esc(mname) + " " + pct(mp, 2) + "</div>";
+      if (dets.length) {
+        html += '<ul style="' + S.dets + '">';
+        for (const [dname, dp] of dets) {
+          html += '<li style="' + S.det + '"><span style="' + S.bullet + '">:</span> '
+            + esc(dname) + " " + pct(dp, 3) + "</li>";
+        }
+        html += "</ul>";
+      }
+      html += "</li>";
+    });
+    html += "</ul></div>";
+    return html;
+  }
+
+  function cell(bigs, emptyLabel, isNext) {
+    if (!bigs.length) return '<span style="' + S.none + '">' + emptyLabel + "</span>";
+    return bigs.map((b, i) => bigBlock(b, i, isNext)).join("");
+  }
+
+  // 이슈사항은 계층 없이 문장 단위 불릿 목록으로만 표시한다.
+  function issuesCell(items) {
+    if (!items.length) return '<span style="' + S.none + '">확인된 이슈 없음</span>';
+    return '<ul style="' + S.issuesList + '">' + items.map((text, i) =>
+      '<li style="' + (i > 0 ? S.issueItemGap : "") + S.issueItem
+        + '"><span style="' + S.issueBullet + '">!</span><span>' + esc(text) + "</span></li>"
+    ).join("") + "</ul>";
+  }
+
+  // 프로젝트명 기준으로 묶는다. 같은 프로젝트를 여러 담당자가 맡으면 한 블록 안에 담당자 행이 쌓인다.
+  // 고정 정렬을 쓰고 싶은 프로젝트만 적는다. 나머지는 뒤에 등장 순서대로 붙는다.
+  const PROJECT_ORDER = [];
+
+  const byProject = new Map();
+  for (const [owner, projects] of DATA) {
+    for (const [pname, now, next, issues = []] of projects) {
+      if (!byProject.has(pname)) byProject.set(pname, []);
+      byProject.get(pname).push([owner, now, next, issues]);
+    }
+  }
+
+  const order = PROJECT_ORDER.filter((p) => byProject.has(p))
+    .concat([...byProject.keys()].filter((p) => !PROJECT_ORDER.includes(p)));
+
+  const tbody = document.getElementById("rows");
+  let html = "";
+  let first = true;
+  for (const pname of order) {
+    const owners = byProject.get(pname);
+    owners.forEach(([owner, now, next, issues], i) => {
+      const top = i === 0 && first ? "" : i === 0 ? S.tdTop : "";
+      html += "<tr>";
+      if (i === 0) {
+        html += '<td rowspan="' + owners.length + '" style="' + S.td + top + S.project
+          + '"><span style="' + S.pname + '">' + esc(pname) + "</span>"
+          + (owners.length > 1 ? '<span style="' + S.count + '">담당자 ' + owners.length + "명</span>" : "")
+          + "</td>";
+      }
+      html += '<td style="' + S.td + top + S.owner + '">' + esc(owner) + "</td>";
+      html += '<td style="' + S.td + top + S.now + '">' + cell(now, "—", false) + "</td>";
+      html += '<td style="' + S.td + top + S.next + '">' + cell(next, "이월 항목 없음", true) + "</td>";
+      html += '<td style="' + S.td + top + S.issues + '">' + issuesCell(issues) + "</td>";
+      html += "</tr>";
+    });
+    first = false;
+  }
+  tbody.innerHTML = html;
+
+  document.getElementById("meta").textContent =
+    PERIOD + " · " + order.length + "개 프로젝트 · " + DATA.length + "명";
+
+  // 표만 떼어 다른 도메인에 붙여 넣을 수 있도록 <table> 전체를 클립보드로 복사한다.
+  const table = document.getElementById("report-table");
+  table.setAttribute("style", S.table);
+  table.querySelectorAll("th").forEach((th) => th.setAttribute("style", S.th));
+
+  const copyBtn = document.getElementById("copy");
+  const copyMsg = document.getElementById("copy-msg");
+
+  copyBtn.addEventListener("click", async () => {
+    const markup = table.outerHTML;
+    let done = false;
+    try {
+      if (navigator.clipboard && window.ClipboardItem) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/html": new Blob([markup], { type: "text/html" }),
+            "text/plain": new Blob([markup], { type: "text/plain" })
+          })
+        ]);
+        done = true;
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(markup);
+        done = true;
+      }
+    } catch (e) {
+      done = false;
+    }
+    if (!done) {
+      const sel = window.getSelection();
+      const range = document.createRange();
+      range.selectNode(table);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      copyMsg.textContent = "표를 선택했습니다. ⌘/Ctrl + C 를 눌러 복사하세요.";
+      return;
+    }
+    copyMsg.textContent = "표 HTML을 복사했습니다. 붙여 넣으면 스타일까지 그대로 따라갑니다.";
+  });
+</script>
