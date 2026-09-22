@@ -61,6 +61,12 @@ assert_skill_rule '상세가 한 줄뿐이면 상세 줄을 만들지 않고 중
 # CLI 수집 결과 해석
 assert_skill_rule 'CLI 출력은 최종 보고서가 아니라 **수집 결과**입니다.'
 
+# 조회 범위 한계 (push는 했지만 default 브랜치도 merge된 PR도 아닌 커밋 누락 경고)
+assert_skill_rule '### 조회 범위 한계'
+assert_skill_rule '`gh search commits`는 레포의 **default 브랜치**에 있는 커밋만 검색합니다.'
+assert_skill_rule '`gh search prs --merged`는 그 기간에 **merge된 PR**의 포함 커밋만 잡습니다.'
+assert_skill_rule '현재 리뷰 대기 중이거나 아직 merge되지 않은 PR이 있는지'
+
 # 여러 사람 완료 목록 직접 입력 (CLI 없는 팀 취합 경로)
 assert_skill_rule '### 대안: 여러 사람의 완료 목록을 직접 받은 경우'
 assert_skill_rule '**날짜·진행률은 사용자가 이미 확정한 값을 그대로 씁니다.**'
@@ -181,6 +187,19 @@ bash -n "$ROOT_DIR/install/install-weekly-report.sh"
 installer_help="$(bash "$ROOT_DIR/install/install-weekly-report.sh" --help)"
 if [[ "$installer_help" != *'--cursor'* ]]; then
   echo 'Expected installer help to include --cursor' >&2
+  exit 1
+fi
+
+# 설치 스크립트가 SKILL.md뿐 아니라 표 템플릿 asset도 함께 내려받는지 확인한다.
+# (asset을 빠뜨리면 Step 13이 참조하는 skills/weekly-report/assets/report-table-template.html이
+# 설치된 환경에는 없어서 표 산출물을 만들 수 없다.)
+installer_source="$(cat "$ROOT_DIR/install/install-weekly-report.sh")"
+if [[ "$installer_source" != *"skills/weekly-report/assets/report-table-template.html"* ]]; then
+  echo "Expected installer to fetch skills/weekly-report/assets/report-table-template.html" >&2
+  exit 1
+fi
+if [[ "$installer_source" != *'mkdir -p "$target_dir/assets"'* ]]; then
+  echo "Expected installer to create the assets/ directory before fetching the template" >&2
   exit 1
 fi
 

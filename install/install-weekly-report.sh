@@ -115,9 +115,12 @@ echo "Installed $COMMAND_NAME to $TARGET_PATH"
 
 install_skill() {
   local target_dir="$1"
-  mkdir -p "$target_dir"
+  mkdir -p "$target_dir/assets"
   curl -fsSL "$BASE_URL/skills/weekly-report/SKILL.md" -o "$target_dir/SKILL.md"
   echo "Installed skill to $target_dir/SKILL.md"
+  curl -fsSL "$BASE_URL/skills/weekly-report/assets/report-table-template.html" \
+    -o "$target_dir/assets/report-table-template.html"
+  echo "Installed table template to $target_dir/assets/report-table-template.html"
 }
 
 if [[ "$INSTALL_CLAUDE" == "true" ]]; then
