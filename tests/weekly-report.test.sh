@@ -40,7 +40,9 @@ assert_skill_rule '| `리팩토링/구조 개선` |'
 assert_skill_rule '| `배포/환경 설정` |'
 assert_skill_rule '| `변경 반영` |'
 assert_skill_rule '처음 걸리는 항목에서 확정'
-assert_skill_rule '`신호:`에 `API 연결` 포함 → `API 연결`'
+assert_skill_rule '`신호:`에 `API 연결` 포함되고 **새 엔드포인트를 처음 연결하는 작업**일 때만 → `API 연결`'
+assert_skill_rule '**`API 연결`은 신규 연동일 때만 씁니다.**'
+assert_skill_rule '`OO API 연결 및 OO 기능 구현`처럼'
 assert_skill_rule '같은 프로젝트 안에서 같은 큰 업무는 하나의 줄로 합칩니다.'
 assert_skill_rule '커밋 접두사가 `style:`이거나'
 assert_skill_rule '신호가 없다는 이유로 퍼블리싱 작업을 `기능개발`에 묻지 않습니다.'
@@ -58,6 +60,12 @@ assert_skill_rule '상세가 한 줄뿐이면 상세 줄을 만들지 않고 중
 
 # CLI 수집 결과 해석
 assert_skill_rule 'CLI 출력은 최종 보고서가 아니라 **수집 결과**입니다.'
+
+# 여러 사람 완료 목록 직접 입력 (CLI 없는 팀 취합 경로)
+assert_skill_rule '### 대안: 여러 사람의 완료 목록을 직접 받은 경우'
+assert_skill_rule '**날짜·진행률은 사용자가 이미 확정한 값을 그대로 씁니다.**'
+assert_skill_rule '**사람별로 별도 행·블록을 유지**합니다. 사람을 합쳐서 요약하지 않습니다.'
+assert_skill_rule 'Step 13 표로 출력할 때 이 사람 구분이 그대로 "담당자" 열이 됩니다.'
 assert_skill_rule '변경 파일 조회는 기본으로 켜 둡니다.'
 
 # 진행률
@@ -128,6 +136,7 @@ assert_skill_rule '외부 릴리스·타 팀 응답·기획 확정 등 내 작�
 assert_skill_rule '확인된 이슈가 없으면 `[이슈사항]` 아래 `- 확인된 이슈 없음` 한 줄을 적습니다.'
 
 # HTML 표 산출물
+assert_skill_rule '"주간보고 표로 만들어줘" / "주간보고 테이블 만들어줘" / "주간보고 html로" → Step 13의 HTML 표 산출물로 응답'
 assert_skill_rule '## Step 13: HTML 표 산출물'
 assert_skill_rule 'skills/weekly-report/assets/report-table-template.html'
 assert_skill_rule '**프로젝트 기준으로 행을 병합**한다. 담당자 기준으로 묶지 않는다'
