@@ -28,7 +28,7 @@ function findWebUrlProblems(url) {
   if (!url) {
     return [
       `운영 웹 URL(${WEBVIEW_URL_KEY})이 EAS production 환경 변수에 없습니다. ` +
-        "README/AGENTS.md 체크리스트 5번대로 EAS 환경 변수를 등록하세요.",
+        "AGENTS.md 최초 1회 준비 5번대로 EAS 환경 변수를 등록하세요.",
     ];
   }
   if (!/^https:\/\//i.test(url)) {

@@ -20,6 +20,8 @@ import {
   sdkNotice,
   buildChecklist,
   RUNTIME_DEPENDENCIES,
+  buildRecoveryMessage,
+  INSTALL_HINT,
 } from "../scripts/create-company-mobile.mjs";
 
 const CWD = "/work";
@@ -50,6 +52,16 @@ test("isValidBundleId는 Android 패키지 규칙을 따른다", () => {
 test("statusBarStyleFor는 어두운 배경에 light, 밝은 배경에 dark를 고른다", () => {
   assert.equal(statusBarStyleFor("#0B1220"), "light");
   assert.equal(statusBarStyleFor("#F8FAFC"), "dark");
+});
+
+test("statusBarStyleFor는 중간 톤 배경에서 대비가 더 큰 글자색을 고른다", () => {
+  // 흰 글자 대비가 2:1대인 주황·회색·초록은 검정 글자(dark)가 맞다.
+  assert.equal(statusBarStyleFor("#FF9800"), "dark");
+  assert.equal(statusBarStyleFor("#BBBBBB"), "dark");
+  assert.equal(statusBarStyleFor("#4CAF50"), "dark");
+  // 흰 글자 대비가 더 큰 진한 색은 light다.
+  assert.equal(statusBarStyleFor("#1565C0"), "light");
+  assert.equal(statusBarStyleFor("#D32F2F"), "light");
 });
 
 test("parseArgs는 --tablet을 켜고 기본값은 false다", () => {
@@ -86,6 +98,19 @@ test("resolveOptions는 한글 이름에 slug가 없으면 --slug를 요구한�
     resolveOptions({ ...validArgs, name: "샘플앱", slug: "sampleapp" }, { cwd: CWD, exists: notExists }).slug,
     "sampleapp",
   );
+});
+
+test("resolveOptions는 한글·영문이 섞인 이름도 slug가 잘리지 않게 --slug를 요구한다", () => {
+  for (const name of ["샘플앱 AI", "샘플앱 2"]) {
+    assert.throws(() => resolveOptions({ ...validArgs, name }, { cwd: CWD, exists: notExists }), /--slug/, name);
+  }
+});
+
+test("resolveOptions는 영문자로 시작하지 않거나 하이픈으로 끝나는 slug를 막는다", () => {
+  for (const slug of ["2nd-app", "app-", "-app", "My-App"]) {
+    assert.throws(() => resolveOptions({ ...validArgs, slug }, { cwd: CWD, exists: notExists }), /--slug/, slug);
+  }
+  assert.equal(resolveOptions({ ...validArgs, slug: "app-2" }, { cwd: CWD, exists: notExists }).slug, "app-2");
 });
 
 test("resolveOptions는 대상 디렉터리가 이미 있으면 멈춘다", () => {
@@ -400,4 +425,27 @@ test("템플릿 eas.json은 EAS가 거부하는 빈 ascAppId를 두지 않고, �
   assert.equal(easJson.submit.production.ios.ascAppId, undefined);
   assert.equal(findSubmitProblems(easJson, "ios").length, 1);
   assert.deepEqual(findSubmitProblems(easJson, "android"), []);
+});
+
+test("릴리즈 워크플로의 submit 입력은 문자열 비교라 -F submit=false가 참으로 평가되지 않는다", () => {
+  const workflow = readTemplate(".eas/workflows/release.yml");
+
+  // eas workflow:run -F는 값을 문자열로 보내므로 boolean 강제 변환에 기대지 않는다.
+  assert.match(workflow, /submit:\n\s+type: choice\n\s+options: \['true', 'false'\]\n\s+default: 'true'/);
+  assert.equal(workflow.match(/if: \$\{\{ inputs\.submit == 'true' \}\}/g)?.length, 2);
+  assert.doesNotMatch(workflow, /if: \$\{\{ inputs\.submit \}\}/);
+});
+
+test("buildRecoveryMessage는 생성기 이후 실패 시 원인·폴더·재시작 방법을 알려 준다", () => {
+  const message = buildRecoveryMessage("명령 실패: pnpm install", "/work/sample app");
+
+  assert.ok(message.includes("명령 실패: pnpm install"));
+  assert.ok(message.includes('rm -rf "/work/sample app"'));
+  assert.match(message, /다시 실행/);
+});
+
+test("INSTALL_HINT는 팀원이 직접 고칠 수 있는 방법만 안내한다", () => {
+  // 설치된 CLI(~/.local/share)를 고치라고 하지 않고, 저장소 담당자에게 알리게 한다.
+  assert.doesNotMatch(INSTALL_HINT, /DISALLOWED_BUILDS도 갱신하세요/);
+  assert.match(INSTALL_HINT, /front-dev-tools/);
 });

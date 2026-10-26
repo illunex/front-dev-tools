@@ -20,7 +20,7 @@ test("findWebUrlProblems는 값이 없으면 EAS 환경 변수 등록을 안내�
 
   assert.equal(problems.length, 1);
   assert.match(problems[0], /EXPO_PUBLIC_WEBVIEW_URL/);
-  assert.match(problems[0], /체크리스트 5번/);
+  assert.match(problems[0], /AGENTS\.md 최초 1회 준비 5번/);
   assert.equal(findWebUrlProblems("").length, 1);
 });
 

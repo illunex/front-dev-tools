@@ -73,14 +73,17 @@ function isHexColor(value) {
   return /^#[0-9A-Fa-f]{6}$/.test(value);
 }
 
-// sRGB 상대 휘도로 배경이 밝으면 어두운 글자(dark), 어두우면 밝은 글자(light)를 고른다.
+// sRGB 상대 휘도로 흰 글자와 검정 글자의 대비(WCAG)를 비교해 더 잘 보이는 쪽을 고른다.
+// 두 대비가 같아지는 휘도는 약 0.179라 중간 톤(주황·회색 등)은 검정 글자(dark)가 된다.
 export function statusBarStyleFor(hex) {
   const [r, g, b] = [1, 3, 5].map((start) => {
     const channel = parseInt(hex.slice(start, start + 2), 16) / 255;
     return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
   });
   const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  return luminance > 0.5 ? "dark" : "light";
+  const contrastWithWhite = 1.05 / (luminance + 0.05);
+  const contrastWithBlack = (luminance + 0.05) / 0.05;
+  return contrastWithBlack > contrastWithWhite ? "dark" : "light";
 }
 
 export function resolveOptions(parsed, { cwd, exists }) {
@@ -97,9 +100,15 @@ export function resolveOptions(parsed, { cwd, exists }) {
     throw new Error(`필수 입력이 없습니다: ${missing.join(", ")}`);
   }
 
+  // 이름에 영문·숫자·공백·하이픈 외 문자(한글 등)가 있으면 파생 slug에서 글자가 조용히 빠지므로 직접 받는다.
+  // slug는 eas init 때 조직 프로젝트 slug와 URL scheme이 되어 나중에 바꾸기 어렵다.
+  if (parsed.slug === undefined && /[^A-Za-z0-9\s-]/.test(parsed.name)) {
+    throw new Error("앱 이름에 영문이 아닌 문자가 있어 디렉터리명을 만들 수 없습니다. --slug로 영문 slug를 지정하세요(예: --slug my-app).");
+  }
   const slug = parsed.slug ?? deriveSlug(parsed.name);
-  if (!slug || deriveSlug(slug) !== slug) {
-    throw new Error("앱 이름으로 디렉터리명을 만들 수 없습니다. --slug로 영문 소문자·숫자·하이픈 이름을 지정하세요.");
+  // URL scheme은 영문자로 시작해야 한다.
+  if (!/^[a-z][a-z0-9]*(-[a-z0-9]+)*$/.test(slug)) {
+    throw new Error(`--slug는 영문 소문자로 시작하고 소문자·숫자·하이픈만 쓸 수 있습니다: ${slug || "(빈 값)"}`);
   }
   if (!isValidBundleId(parsed.bundleId)) {
     throw new Error(`번들 ID 형식이 올바르지 않습니다: ${parsed.bundleId} (예: com.illunex.sample)`);
@@ -382,11 +391,21 @@ function readLatestExpoVersion() {
   return result.status === 0 ? result.stdout.trim() : "";
 }
 
-const INSTALL_HINT = [
+export const INSTALL_HINT = [
   "설치가 실패했습니다. pnpm 11에서 흔한 원인은 두 가지입니다.",
-  "- ERR_PNPM_IGNORED_BUILDS: 새 의존성의 빌드 스크립트 승인 여부가 없습니다. pnpm-workspace.yaml allowBuilds에 true/false를 정하고, 템플릿 CLI의 DISALLOWED_BUILDS도 갱신하세요.",
+  "- ERR_PNPM_IGNORED_BUILDS: 새 의존성의 빌드 스크립트 승인 여부가 정해지지 않았습니다. 출력된 패키지 이름을 front-dev-tools 담당자에게 알려 CLI의 승인 목록(DISALLOWED_BUILDS)에 반영한 뒤 다시 설치하세요.",
   "- minimumReleaseAge: 막 나온 패키지 설치가 거절됐습니다. 출력된 패키지를 pnpm-workspace.yaml minimumReleaseAgeExclude에 넣거나 잠시 후 다시 시도하세요.",
 ].join("\n");
+
+// 생성기가 폴더를 만든 뒤 실패하면 같은 이름으로 다시 실행할 수 없으므로(대상 디렉터리 존재) 정리 방법을 함께 알린다.
+export function buildRecoveryMessage(errorMessage, projectDirectory) {
+  return [
+    errorMessage,
+    "",
+    `프로젝트가 일부만 만들어졌습니다: ${projectDirectory}`,
+    `원인을 해결한 뒤 폴더를 지우고(rm -rf "${projectDirectory}") 같은 명령을 다시 실행하세요.`,
+  ].join("\n");
+}
 
 function createProject(options) {
   const notice = sdkNotice(readLatestExpoVersion(), VERIFIED_EXPO_SDK);
@@ -401,6 +420,15 @@ function createProject(options) {
     );
   }
 
+  try {
+    finishProject(options);
+  } catch (error) {
+    if (options.templatesOnly) throw error;
+    throw new Error(buildRecoveryMessage(error.message, options.projectDirectory));
+  }
+}
+
+function finishProject(options) {
   applyConfigFiles(options);
 
   // 템플릿의 app.config.ts(동적 config)가 들어오기 전에 설치한다.
@@ -434,7 +462,7 @@ function printHelp() {
   create-company-mobile --name <앱 이름> --bundle-id <번들 ID> --dev-url <개발 웹 URL> --prod-url <운영 웹 URL> --background <#RRGGBB> [options]
 
 Options:
-  --slug <slug>        디렉터리명·slug·scheme (기본: 앱 이름에서 생성. 한글 이름이면 필수)
+  --slug <slug>        디렉터리명·slug·scheme (기본: 앱 이름에서 생성. 영문이 아닌 문자가 섞이면 필수)
   --tablet             iPad 지원(ios.supportsTablet). 켜면 App Store 심사에 iPad 스크린샷 필요
   --directory <path>   프로젝트를 만들 부모 디렉터리 (기본: 현재 디렉터리)
   --skip-install       의존성 추가 설치를 건너뜀

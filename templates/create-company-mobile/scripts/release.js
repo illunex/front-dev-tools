@@ -64,19 +64,27 @@ function findRemoteVersionProblems(platform, remote) {
     );
 }
 
-// eas env:get은 `KEY=value` 형식으로 출력한다. 변수가 없으면 실패하므로 undefined로 본다.
+// eas env:get --format short는 `KEY=value` 줄을 출력하고, 변수가 없으면 아무 줄도 내지 않는다.
+// 컬러 출력 환경에서는 KEY가 ANSI 코드로 감싸이므로 지운 뒤 찾는다.
+function parseEasEnvOutput(output, name) {
+  const plain = output.replace(/\u001b\[[0-9;]*m/g, "");
+  const line = plain.split("\n").find((item) => item.startsWith(`${name}=`));
+  return line ? line.slice(name.length + 1).trim() : undefined;
+}
+
+// 조회 자체가 실패하면(미로그인, eas init 전, 네트워크) "미등록"과 구분해 원인을 그대로 보여 준다.
 function readEasEnvValue(root, environment, name) {
-  try {
-    const output = execFileSync(
-      "pnpm",
-      ["exec", "eas", "env:get", environment, "--variable-name", name, "--format", "short", "--non-interactive"],
-      { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
-    );
-    const line = output.split("\n").find((item) => item.startsWith(`${name}=`));
-    return line ? line.slice(name.length + 1).trim() : undefined;
-  } catch {
-    return undefined;
-  }
+  const output = execFileSync(
+    "pnpm",
+    ["exec", "eas", "env:get", environment, "--variable-name", name, "--format", "short", "--non-interactive"],
+    {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: "0" },
+    },
+  );
+  return parseEasEnvOutput(output, name);
 }
 
 function abort(problems) {
@@ -85,7 +93,7 @@ function abort(problems) {
   process.exit(1);
 }
 
-module.exports = { parseReleaseArgs, findGitProblems, findRemoteVersionProblems };
+module.exports = { parseReleaseArgs, findGitProblems, findRemoteVersionProblems, parseEasEnvOutput };
 
 if (require.main === module) {
   const root = path.resolve(__dirname, "..");
@@ -111,10 +119,19 @@ if (require.main === module) {
     abort([`git 상태를 확인할 수 없습니다(remote origin과 main 브랜치가 필요합니다): ${String(error.stderr || error.message).trim()}`]);
   }
 
+  let webViewUrl;
+  try {
+    webViewUrl = readEasEnvValue(root, "production", WEBVIEW_URL_KEY);
+  } catch (error) {
+    abort([
+      `EAS 환경 변수를 조회할 수 없습니다. pnpm exec eas login과 eas init(projectId)을 확인하세요: ${String(error.stderr || error.message).trim()}`,
+    ]);
+  }
+
   const problems = [
     ...findGitProblems(gitState),
     ...findReleaseProblems({
-      webViewUrl: readEasEnvValue(root, "production", WEBVIEW_URL_KEY),
+      webViewUrl,
       easJson: readEasJson(root),
       platform,
       submit: !buildOnly,

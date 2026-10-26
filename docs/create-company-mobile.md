@@ -50,11 +50,11 @@ create-company-mobile \
 | 옵션 | 설명 |
 | --- | --- |
 | `--name` | 앱 표시명(필수) |
-| `--slug` | 디렉터리명·slug·scheme. 기본은 앱 이름을 kebab-case로 바꾼 값. 앱 이름이 한글이면 필수 |
+| `--slug` | 디렉터리명·slug·scheme. 기본은 앱 이름을 kebab-case로 바꾼 값. 앱 이름에 영문이 아닌 문자(한글 등)가 섞이면 필수. 영문 소문자로 시작 |
 | `--bundle-id` | iOS bundleIdentifier·Android package에 같이 쓰는 값(필수, Android 패키지 규칙) |
 | `--dev-url` | 개발 웹 URL(필수). http면 개발 빌드에만 iOS ATS 예외가 들어감 |
 | `--prod-url` | 운영 웹 URL(필수). https 도메인만 허용(IP·localhost 불가) |
-| `--background` | 배경색 `#RRGGBB`(필수). 상태바 글자색은 이 밝기로 자동 결정 |
+| `--background` | 배경색 `#RRGGBB`(필수). 상태바 글자색은 흰색·검정 중 대비가 큰 쪽으로 자동 결정 |
 | `--tablet` | iPad 지원. 켜면 App Store 심사에 iPad 스크린샷 필요 |
 | `--directory` | 프로젝트를 만들 부모 디렉터리. 기본은 현재 디렉터리 |
 | `--skip-install` | 회사 표준 의존성 추가 설치를 건너뜀 |

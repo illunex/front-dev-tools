@@ -52,4 +52,21 @@ for skill in "$FAKE_HOME/.claude/skills/create-company-mobile/SKILL.md" "$FAKE_H
   assert_contains "$skill" "체크리스트"
 done
 
+# 빈 경로나 루트는 rm -rf 대상이 되지 않게 거부한다.
+for bad_dir in "" "/"; do
+  if output="$(HOME="$FAKE_HOME" CREATE_MOBILE_BIN_DIR="$BIN_DIR" \
+    bash "$ROOT_DIR/install/install-create-company-mobile.sh" --source-dir "$ROOT_DIR" --share-dir "$bad_dir" 2>&1)"; then
+    fail "Expected --share-dir '$bad_dir' to be rejected"
+  fi
+  [[ "$output" == *"Invalid share directory"* ]] || fail "Expected explicit rejection for --share-dir '$bad_dir', got: $output"
+done
+
+# 상대 경로로 설치해도 shim은 절대 경로를 써서 다른 위치에서 실행된다.
+(
+  cd "$TMP_DIR"
+  HOME="$FAKE_HOME" bash "$ROOT_DIR/install/install-create-company-mobile.sh" \
+    --source-dir "$ROOT_DIR" --share-dir relative-share --bin-dir relative-bin --no-skills >/dev/null
+)
+(cd / && "$TMP_DIR/relative-bin/create-company-mobile" --help >/dev/null) || fail "Expected shim installed with relative paths to run from another directory"
+
 echo "install-create-company-mobile tests passed"

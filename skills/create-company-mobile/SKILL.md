@@ -27,7 +27,7 @@ description: Use when creating, scaffolding, or bootstrapping a company-standard
 
 | 입력 | CLI 옵션 | 비고 |
 | --- | --- | --- |
-| 앱 이름(표시명) | `--name` | 한글이면 영문 slug도 함께 묻습니다(`--slug`, 디렉터리명·scheme) |
+| 앱 이름(표시명) | `--name` | 영문이 아닌 문자(한글 등)가 섞이면 영문 slug도 함께 묻습니다(`--slug`, 디렉터리명·scheme, 영문 소문자로 시작) |
 | 번들 ID | `--bundle-id` | iOS·Android에 같은 값. 예: `com.illunex.sample` |
 | 개발 웹 URL | `--dev-url` | http·https 모두 가능. http면 개발 빌드에만 iOS 예외가 들어갑니다 |
 | 운영 웹 URL | `--prod-url` | https 도메인만 가능(IP·localhost 불가) |
@@ -92,3 +92,4 @@ CLI가 마지막에 출력한 체크리스트(8개, iPad 지원을 켰다면 9�
 - **minimumReleaseAge로 설치 거절:** 막 나온 패키지가 거절된 경우입니다. `minimumReleaseAgeExclude`에 추가하거나 잠시 후 재시도하도록 안내합니다.
 - **새 SDK 알림:** "SDK N이 나와 있지만 템플릿은 M 기준" 안내는 정상 동작입니다. 템플릿 갱신은 `docs/create-company-mobile.md`의 SDK 갱신 절차를 따릅니다.
 - **검증 실패:** 생성된 프로젝트 안에서 실패한 명령(`pnpm typecheck` 등)과 원인을 먼저 확인합니다.
+- **생성 도중 실패:** 폴더가 일부만 만들어지면 같은 이름으로 다시 실행할 수 없습니다. CLI가 출력한 대로 원인을 해결하고 폴더를 지운 뒤 다시 실행합니다.

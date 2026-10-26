@@ -95,6 +95,21 @@ if [[ "$INSTALL_ALL" == "true" ]]; then
   INSTALL_CODEX=true
 fi
 
+# 아래에서 SHARE_DIR 하위를 rm -rf 하므로 빈 값·루트를 막고, shim이 cwd와 상관없이 동작하도록 절대 경로로 바꾼다.
+to_absolute_dir() {
+  local label="$1"
+  local dir="$2"
+  if [[ -z "$dir" || "$dir" == "/" ]]; then
+    echo "Invalid $label directory: '$dir'" >&2
+    exit 1
+  fi
+  mkdir -p "$dir"
+  (cd "$dir" && pwd)
+}
+
+SHARE_DIR="$(to_absolute_dir share "$SHARE_DIR")"
+BIN_DIR="$(to_absolute_dir bin "$BIN_DIR")"
+
 if ! command -v node >/dev/null 2>&1; then
   echo "node is required." >&2
   exit 1

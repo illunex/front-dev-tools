@@ -11,9 +11,11 @@ on:
         options: [all, ios, android]
         default: all
         required: true
+      # eas workflow:run -F는 값을 문자열로 보내므로 boolean 대신 'true'/'false' 문자열로 받고 문자열로 비교한다.
       submit:
-        type: boolean
-        default: true
+        type: choice
+        options: ['true', 'false']
+        default: 'true'
         required: true
 
 jobs:
@@ -42,7 +44,7 @@ jobs:
   submit_ios:
     name: Submit iOS (TestFlight)
     needs: [build_ios]
-    if: ${{ inputs.submit }}
+    if: ${{ inputs.submit == 'true' }}
     type: submit
     params:
       build_id: ${{ needs.build_ios.outputs.build_id }}
@@ -60,7 +62,7 @@ jobs:
   submit_android:
     name: Submit Android (internal track)
     needs: [build_android]
-    if: ${{ inputs.submit }}
+    if: ${{ inputs.submit == 'true' }}
     type: submit
     params:
       build_id: ${{ needs.build_android.outputs.build_id }}

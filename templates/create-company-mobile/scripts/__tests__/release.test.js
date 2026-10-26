@@ -1,7 +1,7 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { parseReleaseArgs, findGitProblems, findRemoteVersionProblems } = require("../release");
+const { parseReleaseArgs, findGitProblems, findRemoteVersionProblems, parseEasEnvOutput } = require("../release");
 
 const cleanState = { branch: "main", porcelain: "", head: "abc", remoteHead: "abc" };
 
@@ -67,4 +67,23 @@ test("findGitProblems는 여러 문제를 함께 알려 준다", () => {
   });
 
   assert.equal(problems.length, 3);
+});
+
+test("parseEasEnvOutput는 eas env:get 출력에서 값을 읽는다", () => {
+  assert.equal(
+    parseEasEnvOutput("EXPO_PUBLIC_WEBVIEW_URL=https://example.com\n", "EXPO_PUBLIC_WEBVIEW_URL"),
+    "https://example.com",
+  );
+});
+
+test("parseEasEnvOutput는 컬러 출력(ANSI)이 섞여도 값을 읽는다", () => {
+  // FORCE_COLOR 환경에서 eas-cli는 변수 이름을 굵게 출력한다.
+  const colored = "\u001b[1mEXPO_PUBLIC_WEBVIEW_URL\u001b[22m=https://example.com\n";
+
+  assert.equal(parseEasEnvOutput(colored, "EXPO_PUBLIC_WEBVIEW_URL"), "https://example.com");
+});
+
+test("parseEasEnvOutput는 변수가 없으면 undefined다", () => {
+  assert.equal(parseEasEnvOutput("", "EXPO_PUBLIC_WEBVIEW_URL"), undefined);
+  assert.equal(parseEasEnvOutput("OTHER=1\n", "EXPO_PUBLIC_WEBVIEW_URL"), undefined);
 });
