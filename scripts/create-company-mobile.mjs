@@ -132,6 +132,109 @@ export function resolveOptions(parsed, { cwd, exists }) {
   };
 }
 
+const EXPO_OWNER = "illunex";
+const SPLASH_PLUGIN = "expo-splash-screen";
+
+// 아래 apply* 함수는 입력을 바꾸지 않고, 두 번 적용해도 결과가 같다(--templates-only 재적용 대비).
+export function applyAppJson(appJson, options) {
+  const expo = structuredClone(appJson.expo ?? {});
+  delete expo.web;
+
+  const plugins = (expo.plugins ?? []).filter(
+    (plugin) => plugin !== SPLASH_PLUGIN && !(Array.isArray(plugin) && plugin[0] === SPLASH_PLUGIN),
+  );
+  plugins.push([
+    SPLASH_PLUGIN,
+    {
+      image: "./assets/splash-icon.png",
+      imageWidth: 200,
+      resizeMode: "contain",
+      backgroundColor: options.background,
+      dark: { backgroundColor: options.background },
+    },
+  ]);
+
+  return {
+    ...appJson,
+    expo: {
+      ...expo,
+      name: options.name,
+      slug: options.slug,
+      scheme: options.scheme,
+      owner: EXPO_OWNER,
+      orientation: "portrait",
+      userInterfaceStyle: "automatic",
+      ios: { ...expo.ios, bundleIdentifier: options.bundleId, supportsTablet: options.tablet },
+      android: { ...expo.android, package: options.bundleId },
+      plugins,
+    },
+  };
+}
+
+const PACKAGE_SCRIPTS = {
+  start: "expo start",
+  android: "expo run:android",
+  ios: "expo run:ios",
+  lint: "expo lint",
+  typecheck: "tsc --noEmit",
+  test: "jest",
+  "test:scripts": 'node --test "scripts/__tests__/*.test.js"',
+  "set-version": "node scripts/set-version.js",
+  release: "node scripts/release.js",
+  "check-release": "node scripts/check-release.js",
+};
+
+export function applyPackageJson(pkg) {
+  return {
+    ...pkg,
+    scripts: { ...PACKAGE_SCRIPTS },
+    jest: { preset: "jest-expo", moduleNameMapper: { "^@/(.*)$": "<rootDir>/src/$1" } },
+  };
+}
+
+export function applyTsconfig(tsconfig) {
+  return {
+    ...tsconfig,
+    compilerOptions: { ...tsconfig.compilerOptions, strict: true, paths: { "@/*": ["./src/*"] } },
+  };
+}
+
+const GITIGNORE_ENV_LINES = [".env*", "!.env.example"];
+
+export function applyGitignore(text) {
+  const lines = text.split("\n");
+  const missing = GITIGNORE_ENV_LINES.filter((line) => !lines.includes(line));
+  if (missing.length === 0) return text;
+
+  const base = text.endsWith("\n") ? text : `${text}\n`;
+  return `${base}\n# env 파일은 커밋하지 않는다. 키 목록은 .env.example, 클라우드 빌드 값은 EAS 환경 변수\n${missing.join("\n")}\n`;
+}
+
+// eslint-config-expo가 끌어오는 unrs-resolver의 빌드 스크립트 승인 여부를 미리 정해 pnpm 11 설치가 멈추지 않게 한다.
+export function applyPnpmWorkspace(text) {
+  if (/^allowBuilds:/m.test(text)) return text;
+  return `allowBuilds:\n  unrs-resolver: false\n${text}`;
+}
+
+export function renderTokens(content, tokens) {
+  return Object.entries(tokens).reduce((result, [token, value]) => result.replaceAll(token, value), content);
+}
+
+export function buildTokens(options) {
+  return {
+    __CCM_APP_NAME__: options.name,
+    __CCM_BACKGROUND_COLOR__: options.background,
+    __CCM_STATUS_BAR_STYLE__: options.statusBarStyle,
+  };
+}
+
+export function buildEnvFiles(options) {
+  return {
+    ".env.development": `EXPO_PUBLIC_WEBVIEW_URL=${options.devUrl}\n`,
+    ".env.production": `EXPO_PUBLIC_WEBVIEW_URL=${options.prodUrl}\n`,
+  };
+}
+
 function printHelp() {
   console.log(`Usage:
   create-company-mobile --name <앱 이름> --bundle-id <번들 ID> --dev-url <개발 웹 URL> --prod-url <운영 웹 URL> --background <#RRGGBB> [options]
