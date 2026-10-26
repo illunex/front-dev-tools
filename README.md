@@ -7,6 +7,7 @@
 - [sync-env 설치 가이드](./docs/sync-env.md)
 - [conventions 설치 가이드](./docs/conventions.md)
 - [create-company-frontend 설치 가이드](./docs/create-company-frontend.md)
+- [create-company-mobile 설치 가이드](./docs/create-company-mobile.md)
 - [weekly-report 설치 가이드](./docs/weekly-report.md)
 
 ## Tools
@@ -34,6 +35,23 @@ curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/instal
 ```
 
 [스크립트](./scripts/create-company-frontend.mjs) · [설치 스크립트](./install/install-create-company-frontend.sh) · [스킬](./skills/create-company-frontend/SKILL.md) · [문서](./docs/create-company-frontend.md)
+
+---
+
+### `create-company-mobile`
+
+공식 Expo 생성기 기반으로 회사 표준 웹뷰 앱을 생성하는 CLI입니다. 생성 결과에는 다음이 들어 있습니다.
+
+- pnpm·CNG·FSD
+- 웹뷰 코어: 외부 앱 URL, 인앱 브라우저, 스플래시 오버레이, 브리지
+- EAS 릴리즈 파이프라인
+- AGENTS.md
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/install/install-create-company-mobile.sh | bash
+```
+
+[스크립트](./scripts/create-company-mobile.mjs) · [템플릿](./templates/create-company-mobile/) · [설치 스크립트](./install/install-create-company-mobile.sh) · [스킬](./skills/create-company-mobile/SKILL.md) · [문서](./docs/create-company-mobile.md)
 
 ---
 
@@ -83,6 +101,7 @@ AI 개발 도구에서 바로 사용할 수 있는 skill이 포함되어 있습�
 
 - [`skills/sync-env`](./skills/sync-env/SKILL.md) — GitHub Actions 환경변수를 로컬 `.env` 파일로 동기화
 - [`skills/create-company-frontend`](./skills/create-company-frontend/SKILL.md) — 공식 generator 기반 회사 표준 React/Next 보일러플레이트 생성
+- [`skills/create-company-mobile`](./skills/create-company-mobile/SKILL.md) — 공식 Expo 생성기 기반 회사 표준 웹뷰 앱 생성(FSD·웹뷰 코어·EAS 릴리즈)
 - [`skills/weekly-report`](./skills/weekly-report/SKILL.md) — GitHub 커밋 내역을 3단계 계층형 주간보고 포맷 또는 고정 포맷 HTML 표로 정리
 
 ### Skills 설치
