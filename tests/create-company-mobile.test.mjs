@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import {
@@ -336,4 +337,55 @@ test("buildChecklist는 iPad 지원을 켜면 iPad 항목을 마지막에 더한
 test("RUNTIME_DEPENDENCIES는 Android에서 userInterfaceStyle을 적용하는 expo-system-ui를 포함한다", () => {
   // prebuild 경고: "userInterfaceStyle: Install expo-system-ui in your project to enable this feature."
   assert.ok(RUNTIME_DEPENDENCIES.includes("expo-system-ui"));
+});
+
+const TEMPLATE_ROOT = new URL("../templates/create-company-mobile/", import.meta.url);
+const readTemplate = (path) => readFileSync(new URL(path, TEMPLATE_ROOT), "utf8");
+
+test("템플릿 AGENTS.md는 생성 프로젝트 규칙을 모두 담는다", () => {
+  const agents = readTemplate("AGENTS.md");
+  const required = [
+    "__CCM_APP_NAME__",
+    "pnpm expo install",
+    "FSD",
+    "app → views → widgets → features → entities → shared",
+    "processes",
+    "Expo Router",
+    "ios/",
+    "BridgeMessage",
+    "window.__NATIVE_APP__",
+    "originWhitelist",
+    "pnpm release",
+    "--build-only",
+    ".env.example",
+    "EAS 환경 변수",
+    "eas env:pull",
+    "EAS credentials",
+    "https://docs.expo.dev/versions/",
+  ];
+
+  for (const text of required) {
+    assert.ok(agents.includes(text), `AGENTS.md에 "${text}"가 없습니다`);
+  }
+});
+
+test("템플릿 AGENTS.md에는 npm 계열 명령과 Router·Next.js 안내가 없다", () => {
+  const agents = readTemplate("AGENTS.md");
+
+  for (const text of ["npx ", "bunx", "Routes live in", "Next.js"]) {
+    assert.ok(!agents.includes(text), `AGENTS.md에 "${text}"가 있습니다`);
+  }
+});
+
+test("템플릿 CLAUDE.md는 AGENTS.md만 불러온다", () => {
+  assert.equal(readTemplate("CLAUDE.md").trim(), "@AGENTS.md");
+});
+
+test("템플릿 README.md는 앱 이름과 개발 빌드 실행 방법을 담는다", () => {
+  const readme = readTemplate("README.md");
+
+  assert.ok(readme.startsWith("# __CCM_APP_NAME__"));
+  assert.ok(readme.includes("pnpm ios"));
+  assert.ok(readme.includes("AGENTS.md"));
+  assert.ok(!readme.includes("npx "));
 });
