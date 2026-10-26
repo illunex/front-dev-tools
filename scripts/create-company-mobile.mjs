@@ -340,7 +340,7 @@ function copyTemplates(projectDirectory, tokens) {
   visit("");
 }
 
-function applyProjectFiles(options) {
+function applyConfigFiles(options) {
   const root = options.projectDirectory;
 
   writeJson(join(root, "app.json"), applyAppJson(readJson(join(root, "app.json")), options));
@@ -352,6 +352,10 @@ function applyProjectFiles(options) {
   // 진입점은 src/app으로 옮기고, 웹 타깃은 쓰지 않는다.
   rmSync(join(root, "App.tsx"), { force: true });
   rmSync(join(root, "assets/favicon.png"), { force: true });
+}
+
+function applyTemplateFiles(options) {
+  const root = options.projectDirectory;
 
   copyTemplates(root, buildTokens(options));
   for (const [file, content] of Object.entries(buildEnvFiles(options))) {
@@ -397,8 +401,10 @@ function createProject(options) {
     );
   }
 
-  applyProjectFiles(options);
+  applyConfigFiles(options);
 
+  // 템플릿의 app.config.ts(동적 config)가 들어오기 전에 설치한다.
+  // 동적 config가 있으면 expo install이 필요한 플러그인(expo-web-browser 등)을 app.json에 자동으로 쓰지 못하고 실패한다.
   const root = options.projectDirectory;
   if (!options.templatesOnly && !options.skipInstall) {
     run("pnpm", ["install"], root, INSTALL_HINT);
@@ -406,6 +412,8 @@ function createProject(options) {
     run("pnpm", ["expo", "install", ...DEV_DEPENDENCIES, "--", "-D"], root, INSTALL_HINT);
     run("pnpm", ["add", "-D", ...PINNED_DEV_DEPENDENCIES], root, INSTALL_HINT);
   }
+
+  applyTemplateFiles(options);
 
   if (!options.templatesOnly && !options.skipVerify) {
     run("pnpm", ["typecheck"], root);

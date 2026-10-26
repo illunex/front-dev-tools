@@ -362,6 +362,8 @@ test("템플릿 AGENTS.md는 생성 프로젝트 규칙을 모두 담는다", ()
     "eas env:pull",
     "EAS credentials",
     "https://docs.expo.dev/versions/",
+    // app.config.ts(동적 config) 때문에 expo install이 플러그인을 못 쓸 때의 대처
+    "Cannot automatically write to dynamic config",
   ];
 
   for (const text of required) {
@@ -388,4 +390,14 @@ test("템플릿 README.md는 앱 이름과 개발 빌드 실행 방법을 담는
   assert.ok(readme.includes("pnpm ios"));
   assert.ok(readme.includes("AGENTS.md"));
   assert.ok(!readme.includes("npx "));
+});
+
+test("템플릿 eas.json은 EAS가 거부하는 빈 ascAppId를 두지 않고, 배포 전 검사가 미입력을 잡는다", async () => {
+  const easJson = JSON.parse(readTemplate("eas.json"));
+  const { findSubmitProblems } = await import("../templates/create-company-mobile/scripts/check-release.js");
+
+  // eas-cli는 "submit.production.ios.ascAppId" is not allowed to be empty로 eas.json 전체를 거부한다.
+  assert.equal(easJson.submit.production.ios.ascAppId, undefined);
+  assert.equal(findSubmitProblems(easJson, "ios").length, 1);
+  assert.deepEqual(findSubmitProblems(easJson, "android"), []);
 });

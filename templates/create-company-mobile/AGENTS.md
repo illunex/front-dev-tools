@@ -27,6 +27,8 @@ pnpm exec eas <command>       # EAS CLI는 devDependency로 고정돼 있다
 
 작업을 끝냈다고 말하기 전에 lint, typecheck, test, test:scripts를 모두 실행한다.
 
+`app.config.ts`(동적 config)가 있어서, config plugin이 필요한 패키지를 `pnpm expo install`로 넣으면 `Cannot automatically write to dynamic config`와 함께 명령이 실패할 수 있다. 패키지 설치 자체는 끝난 상태다. 출력된 plugin 이름을 `app.json`의 `plugins`에 직접 추가하면 된다.
+
 ## 폴더 구조: FSD
 
 폴더 구조는 FSD(Feature-Sliced Design)를 따른다. 이 섹션이 회사 공통 folder-structure 규칙보다 우선한다.
