@@ -18,6 +18,7 @@ import {
   buildEnvFiles,
   sdkNotice,
   buildChecklist,
+  RUNTIME_DEPENDENCIES,
 } from "../scripts/create-company-mobile.mjs";
 
 const CWD = "/work";
@@ -238,6 +239,8 @@ test("applyTsconfig는 @/* 별칭을 src로 연결하고 strict를 유지한다"
   const tsconfig = applyTsconfig({ extends: "expo/tsconfig.base", compilerOptions: { strict: true } });
 
   assert.deepEqual(tsconfig.compilerOptions.paths, { "@/*": ["./src/*"] });
+  // TypeScript 6부터 types 기본값이 []라 jest 전역(describe·expect)을 명시해야 typecheck가 통과한다.
+  assert.deepEqual(tsconfig.compilerOptions.types, ["jest"]);
   assert.equal(tsconfig.compilerOptions.strict, true);
   assert.equal(tsconfig.extends, "expo/tsconfig.base");
 });
@@ -328,4 +331,9 @@ test("buildChecklist는 iPad 지원을 켜면 iPad 항목을 마지막에 더한
 
   assert.equal(checklist.length, 9);
   assert.match(checklist[8], /iPad/);
+});
+
+test("RUNTIME_DEPENDENCIES는 Android에서 userInterfaceStyle을 적용하는 expo-system-ui를 포함한다", () => {
+  // prebuild 경고: "userInterfaceStyle: Install expo-system-ui in your project to enable this feature."
+  assert.ok(RUNTIME_DEPENDENCIES.includes("expo-system-ui"));
 });

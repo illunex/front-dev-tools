@@ -210,7 +210,8 @@ export function applyPackageJson(pkg) {
 export function applyTsconfig(tsconfig) {
   return {
     ...tsconfig,
-    compilerOptions: { ...tsconfig.compilerOptions, strict: true, paths: { "@/*": ["./src/*"] } },
+    // TypeScript 6부터 types 기본값이 []라 jest 전역(describe·expect)을 명시한다.
+    compilerOptions: { ...tsconfig.compilerOptions, strict: true, types: ["jest"], paths: { "@/*": ["./src/*"] } },
   };
 }
 
@@ -274,6 +275,8 @@ export const RUNTIME_DEPENDENCIES = [
   "expo-splash-screen",
   "expo-constants",
   "expo-dev-client",
+  // app.json userInterfaceStyle(automatic)을 Android에 적용하는 데 필요하다.
+  "expo-system-ui",
 ];
 
 // SDK 버전에 맞춰야 하는 개발 의존성은 expo install로, 그 외는 버전을 고정해 pnpm add로 넣는다.
