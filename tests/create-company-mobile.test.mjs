@@ -16,6 +16,8 @@ import {
   renderTokens,
   buildTokens,
   buildEnvFiles,
+  sdkNotice,
+  buildChecklist,
 } from "../scripts/create-company-mobile.mjs";
 
 const CWD = "/work";
@@ -222,7 +224,12 @@ test("applyPackageJson은 pnpm 기준 스크립트와 jest 설정을 넣는다",
     release: "node scripts/release.js",
     "check-release": "node scripts/check-release.js",
   });
-  assert.deepEqual(pkg.jest, { preset: "jest-expo", moduleNameMapper: { "^@/(.*)$": "<rootDir>/src/$1" } });
+  assert.deepEqual(pkg.jest, {
+    preset: "jest-expo",
+    moduleNameMapper: { "^@/(.*)$": "<rootDir>/src/$1" },
+    // scripts/__tests__는 node:test로 돌리는 릴리즈 스크립트 테스트라 jest 대상에서 뺀다.
+    testPathIgnorePatterns: ["/node_modules/", "<rootDir>/scripts/"],
+  });
   assert.deepEqual(pkg.dependencies, GENERATED_PACKAGE_JSON.dependencies);
   assert.deepEqual(applyPackageJson(pkg), pkg);
 });
@@ -246,12 +253,27 @@ test("applyGitignore는 .env 전체를 막고 .env.example만 허용한다", () 
   assert.equal(applyGitignore(once), once);
 });
 
-test("applyPnpmWorkspace는 unrs-resolver 빌드 승인을 넣고 기존 설정을 유지한다", () => {
+const BUILD_SCRIPT_PACKAGES = ["'@parcel/watcher'", "dtrace-provider", "protobufjs", "unrs-resolver"];
+
+test("applyPnpmWorkspace는 의존성 빌드 스크립트를 모두 false로 명시하고 기존 설정을 유지한다", () => {
   const once = applyPnpmWorkspace(GENERATED_PNPM_WORKSPACE);
 
-  assert.match(once, /^allowBuilds:\n {2}unrs-resolver: false$/m);
+  assert.match(once, /^allowBuilds:$/m);
+  for (const name of BUILD_SCRIPT_PACKAGES) {
+    assert.match(once, new RegExp(`^ {2}${name}: false$`, "m"), name);
+  }
   assert.ok(once.includes("minimumReleaseAgeExclude:\n  - '@expo/cli@58.1.14'\n  - expo@58.0.17\n"));
   assert.equal(applyPnpmWorkspace(once), once);
+});
+
+test("applyPnpmWorkspace는 이미 있는 allowBuilds 블록에 빠진 항목만 더하고 기존 값은 유지한다", () => {
+  const result = applyPnpmWorkspace("allowBuilds:\n  unrs-resolver: true\nminimumReleaseAgeExclude:\n  - expo@58.0.17\n");
+
+  assert.equal(result.match(/^allowBuilds:$/gm).length, 1);
+  assert.match(result, /^ {2}unrs-resolver: true$/m);
+  assert.doesNotMatch(result, /unrs-resolver: false/);
+  assert.match(result, /^ {2}protobufjs: false$/m);
+  assert.ok(result.endsWith("minimumReleaseAgeExclude:\n  - expo@58.0.17\n"));
 });
 
 test("renderTokens는 지정한 토큰만 바꾸고 __DEV__ 같은 값은 건드리지 않는다", () => {
@@ -275,4 +297,35 @@ test("buildEnvFiles는 개발·운영 웹 URL을 각 env 파일에 쓴다", () =
     ".env.development": "EXPO_PUBLIC_WEBVIEW_URL=http://192.168.0.10:3000\n",
     ".env.production": "EXPO_PUBLIC_WEBVIEW_URL=https://example.com\n",
   });
+});
+
+test("sdkNotice는 템플릿 기준보다 새 SDK major가 있을 때만 알린다", () => {
+  const notice = sdkNotice("59.0.1", 58);
+
+  assert.ok(notice.includes("59"));
+  assert.ok(notice.includes("58"));
+  assert.equal(sdkNotice("58.0.17", 58), null);
+  assert.equal(sdkNotice("57.0.0", 58), null);
+  assert.equal(sdkNotice("not-a-version", 58), null);
+});
+
+test("buildChecklist는 설계 문서 4.8 순서대로 8개를 안내한다", () => {
+  const checklist = buildChecklist({ tablet: false });
+
+  assert.equal(checklist.length, 8);
+  assert.match(checklist[0], /remote/);
+  assert.match(checklist[1], /illunex/);
+  assert.match(checklist[2], /ascAppId/);
+  assert.match(checklist[3], /Play Console/);
+  assert.match(checklist[4], /EXPO_PUBLIC_WEBVIEW_URL/);
+  assert.match(checklist[5], /build:version:set/);
+  assert.match(checklist[6], /--build-only/);
+  assert.match(checklist[7], /스플래시/);
+});
+
+test("buildChecklist는 iPad 지원을 켜면 iPad 항목을 마지막에 더한다", () => {
+  const checklist = buildChecklist({ tablet: true });
+
+  assert.equal(checklist.length, 9);
+  assert.match(checklist[8], /iPad/);
 });
