@@ -57,7 +57,8 @@ create-company-frontend --framework next --name my-app --directory ./apps
 - Next.js: `pnpm dlx create-next-app@latest`
 - React/Vite: `pnpm create vite@latest`
 - 패키지 매니저: `pnpm`
-- 생성 후 회사 표준 폴더 구조와 기본 Provider/API 파일을 적용합니다.
+- 생성 후 회사 표준 FSD 폴더 구조와 기본 Provider/API 파일을 적용합니다.
+- Next.js는 라우터를 루트 `app/`에, FSD 레이어를 `src/`에 둡니다. React/Vite는 `src/`만 쓰고, `react-router`로 `src/app/routes`에 라우트를 구성합니다.
 
 ## 주요 옵션
 

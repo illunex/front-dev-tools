@@ -1,6 +1,6 @@
 ---
 name: create-company-frontend
-description: Use when creating, scaffolding, bootstrapping, or generating a company-standard React/Vite or Next.js frontend boilerplate project with the latest official generator, pnpm, TypeScript, and the shared feature-based folder structure.
+description: Use when creating, scaffolding, bootstrapping, or generating a company-standard React/Vite or Next.js frontend boilerplate project with the latest official generator, pnpm, TypeScript, and the shared FSD (Feature-Sliced Design) folder structure.
 ---
 
 # create-company-frontend
@@ -18,7 +18,7 @@ description: Use when creating, scaffolding, bootstrapping, or generating a comp
 
 - 패키지 매니저는 항상 `pnpm`만 사용합니다.
 - Next/Vite의 최신 기본 설정은 공식 generator에 맡깁니다.
-- 회사 표준 영역만 적용합니다: `src/screen`, `src/features`, `src/components`, `src/apis`, `src/hooks`, `src/store`, `src/types`, `src/utils`, `src/styles`.
+- 회사 표준 영역만 적용합니다: 루트 `app`(Next.js 라우팅), `src/app`, `src/views`, `src/widgets`, `src/features`, `src/entities`, `src/shared`.
 - 생성된 설정 파일은 가능하면 병합하고, 불필요하게 오래된 설정으로 덮어쓰지 않습니다.
 - 프로젝트 이름 또는 프레임워크가 불명확하면 생성 전에 사용자에게 확인합니다.
 - 공식 generator 실행, CLI 설치, 의존성 설치, 검증처럼 네트워크 접근 또는 대량 파일 쓰기가 예상되는 명령은 샌드박스 실패를 기다리지 말고 처음부터 escalated 실행 승인을 요청합니다.
@@ -65,25 +65,27 @@ curl -fsSL https://raw.githubusercontent.com/illunex/front-dev-tools/main/instal
 - `clsx`
 - `tailwind-merge`
 
-React/Vite 프로젝트에는 `react-router-dom`도 추가합니다.
+React/Vite 프로젝트에는 `react-router`와 `react-router-dom`을 7.x로 맞춰 추가하고, `src/app/routes`에 라우트를 구성합니다. 최신 `react-router`(8.x)에 맞는 `react-router-dom`이 없어서 같은 메이저로 고정합니다.
 
-공통 구조:
+공통 구조(FSD):
 
 ```text
+app/                  # Next.js 라우팅만 담당 (React/Vite에는 없음)
 src/
-├── app/
-├── screen/home/homeScreen/
-├── features/common/
-├── components/layouts/
-├── components/ui/
-├── apis/
-├── hooks/
-├── lib/
-├── store/
-├── constants/
-├── types/
-├── utils/
-└── styles/
+├── app/providers/
+├── app/routes/       # React/Vite 라우트 설정 (Next.js에는 없음)
+├── views/home/
+├── widgets/
+├── features/
+├── entities/
+└── shared/
+    ├── api/
+    ├── config/
+    ├── hooks/
+    ├── lib/
+    ├── model/
+    ├── styles/
+    └── ui/
 ```
 
 ## 작업 절차
