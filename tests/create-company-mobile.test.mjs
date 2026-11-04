@@ -1,0 +1,451 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+import {
+  parseArgs,
+  deriveSlug,
+  isValidBundleId,
+  statusBarStyleFor,
+  resolveOptions,
+  applyAppJson,
+  applyPackageJson,
+  applyTsconfig,
+  applyGitignore,
+  applyPnpmWorkspace,
+  renderTokens,
+  buildTokens,
+  buildEnvFiles,
+  sdkNotice,
+  buildChecklist,
+  RUNTIME_DEPENDENCIES,
+  buildRecoveryMessage,
+  INSTALL_HINT,
+} from "../scripts/create-company-mobile.mjs";
+
+const CWD = "/work";
+const notExists = () => false;
+const validArgs = {
+  ...parseArgs([]),
+  name: "Sample App",
+  bundleId: "com.illunex.sample",
+  devUrl: "http://192.168.0.10:3000",
+  prodUrl: "https://example.com",
+  background: "#0B1220",
+};
+
+test("deriveSlug는 앱 이름을 kebab-case로 바꾼다", () => {
+  assert.equal(deriveSlug("Sample App"), "sample-app");
+  assert.equal(deriveSlug("  My--App 2 "), "my-app-2");
+  assert.equal(deriveSlug("샘플앱"), "");
+});
+
+test("isValidBundleId는 Android 패키지 규칙을 따른다", () => {
+  assert.equal(isValidBundleId("com.illunex.sample"), true);
+  assert.equal(isValidBundleId("com.illunex"), true);
+  assert.equal(isValidBundleId("sample"), false);
+  assert.equal(isValidBundleId("com.1abc.app"), false);
+  assert.equal(isValidBundleId("com.my-app.x"), false);
+});
+
+test("statusBarStyleFor는 어두운 배경에 light, 밝은 배경에 dark를 고른다", () => {
+  assert.equal(statusBarStyleFor("#0B1220"), "light");
+  assert.equal(statusBarStyleFor("#F8FAFC"), "dark");
+});
+
+test("statusBarStyleFor는 중간 톤 배경에서 대비가 더 큰 글자색을 고른다", () => {
+  // 흰 글자 대비가 2:1대인 주황·회색·초록은 검정 글자(dark)가 맞다.
+  assert.equal(statusBarStyleFor("#FF9800"), "dark");
+  assert.equal(statusBarStyleFor("#BBBBBB"), "dark");
+  assert.equal(statusBarStyleFor("#4CAF50"), "dark");
+  // 흰 글자 대비가 더 큰 진한 색은 light다.
+  assert.equal(statusBarStyleFor("#1565C0"), "light");
+  assert.equal(statusBarStyleFor("#D32F2F"), "light");
+});
+
+test("parseArgs는 --tablet을 켜고 기본값은 false다", () => {
+  assert.equal(parseArgs([]).tablet, false);
+  assert.equal(parseArgs(["--tablet"]).tablet, true);
+});
+
+test("parseArgs는 값이 필요한 옵션을 읽는다", () => {
+  const parsed = parseArgs(["--name", "Sample App", "--bundle-id", "com.a.b", "--templates-only"]);
+
+  assert.equal(parsed.name, "Sample App");
+  assert.equal(parsed.bundleId, "com.a.b");
+  assert.equal(parsed.templatesOnly, true);
+});
+
+test("parseArgs는 모르는 인자를 throw한다", () => {
+  assert.throws(() => parseArgs(["--unknown"]), /--unknown/);
+});
+
+test("resolveOptions는 정상 입력에서 파생값을 채운다", () => {
+  const options = resolveOptions(validArgs, { cwd: CWD, exists: notExists });
+
+  assert.equal(options.slug, "sample-app");
+  assert.equal(options.scheme, "sample-app");
+  assert.equal(options.tablet, false);
+  assert.equal(options.statusBarStyle, "light");
+  assert.equal(options.parentDirectory, CWD);
+  assert.equal(options.projectDirectory, join(CWD, "sample-app"));
+});
+
+test("resolveOptions는 한글 이름에 slug가 없으면 --slug를 요구한다", () => {
+  assert.throws(() => resolveOptions({ ...validArgs, name: "샘플앱" }, { cwd: CWD, exists: notExists }), /--slug/);
+  assert.equal(
+    resolveOptions({ ...validArgs, name: "샘플앱", slug: "sampleapp" }, { cwd: CWD, exists: notExists }).slug,
+    "sampleapp",
+  );
+});
+
+test("resolveOptions는 한글·영문이 섞인 이름도 slug가 잘리지 않게 --slug를 요구한다", () => {
+  for (const name of ["샘플앱 AI", "샘플앱 2"]) {
+    assert.throws(() => resolveOptions({ ...validArgs, name }, { cwd: CWD, exists: notExists }), /--slug/, name);
+  }
+});
+
+test("resolveOptions는 영문자로 시작하지 않거나 하이픈으로 끝나는 slug를 막는다", () => {
+  for (const slug of ["2nd-app", "app-", "-app", "My-App"]) {
+    assert.throws(() => resolveOptions({ ...validArgs, slug }, { cwd: CWD, exists: notExists }), /--slug/, slug);
+  }
+  assert.equal(resolveOptions({ ...validArgs, slug: "app-2" }, { cwd: CWD, exists: notExists }).slug, "app-2");
+});
+
+test("resolveOptions는 대상 디렉터리가 이미 있으면 멈춘다", () => {
+  assert.throws(() => resolveOptions(validArgs, { cwd: CWD, exists: () => true }), /이미 존재/);
+});
+
+test("resolveOptions는 --templates-only일 때 대상 디렉터리가 있어야 한다", () => {
+  const templatesOnly = { ...validArgs, templatesOnly: true };
+
+  assert.throws(() => resolveOptions(templatesOnly, { cwd: CWD, exists: notExists }), /없습니다/);
+  assert.equal(resolveOptions(templatesOnly, { cwd: CWD, exists: () => true }).templatesOnly, true);
+});
+
+test("resolveOptions는 #RRGGBB가 아닌 배경색을 막는다", () => {
+  for (const background of ["#fff", "0B1220", "#GGGGGG"]) {
+    assert.throws(() => resolveOptions({ ...validArgs, background }, { cwd: CWD, exists: notExists }), /#RRGGBB/, background);
+  }
+});
+
+test("resolveOptions는 운영 URL을 릴리즈 검사와 같은 기준으로 막는다", () => {
+  assert.throws(
+    () => resolveOptions({ ...validArgs, prodUrl: "http://example.com" }, { cwd: CWD, exists: notExists }),
+    /https/,
+  );
+  assert.throws(
+    () => resolveOptions({ ...validArgs, prodUrl: "https://192.168.0.10" }, { cwd: CWD, exists: notExists }),
+    /IP/,
+  );
+});
+
+test("resolveOptions는 http(s)가 아닌 개발 URL을 막는다", () => {
+  assert.throws(() => resolveOptions({ ...validArgs, devUrl: "ftp://x" }, { cwd: CWD, exists: notExists }), /개발 웹 URL/);
+});
+
+test("resolveOptions는 빠진 필수 입력을 모두 알려 준다", () => {
+  assert.throws(
+    () => resolveOptions(parseArgs([]), { cwd: CWD, exists: notExists }),
+    (error) => ["--name", "--bundle-id", "--dev-url", "--prod-url", "--background"].every((flag) => error.message.includes(flag)),
+  );
+});
+
+test("resolveOptions는 잘못된 번들 ID를 막는다", () => {
+  assert.throws(() => resolveOptions({ ...validArgs, bundleId: "sample" }, { cwd: CWD, exists: notExists }), /번들 ID/);
+});
+
+// create-expo-app blank-typescript@sdk-58 초기 출력
+const GENERATED_APP_JSON = {
+  expo: {
+    name: "sample-app",
+    slug: "sample-app",
+    version: "1.0.0",
+    orientation: "portrait",
+    icon: "./assets/icon.png",
+    userInterfaceStyle: "light",
+    ios: { supportsTablet: true },
+    android: {
+      adaptiveIcon: {
+        backgroundColor: "#E6F4FE",
+        foregroundImage: "./assets/android-icon-foreground.png",
+        backgroundImage: "./assets/android-icon-background.png",
+        monochromeImage: "./assets/android-icon-monochrome.png",
+      },
+      predictiveBackGestureEnabled: false,
+    },
+    web: { favicon: "./assets/favicon.png" },
+  },
+};
+const GENERATED_PACKAGE_JSON = {
+  name: "sample-app",
+  version: "1.0.0",
+  main: "index.ts",
+  dependencies: { expo: "~58.0.17", "expo-status-bar": "~58.0.4", react: "19.3.0", "react-native": "0.88.0" },
+  devDependencies: { "@types/react": "~19.3.0", typescript: "~6.0.3" },
+  scripts: {
+    start: "expo start",
+    android: "expo start --android",
+    ios: "expo start --ios",
+    web: "expo start --web",
+  },
+  private: true,
+};
+const GENERATED_GITIGNORE = "node_modules/\n\n# local env files\n.env*.local\n\n# generated native folders\n/ios\n/android\n";
+const GENERATED_PNPM_WORKSPACE = "minimumReleaseAgeExclude:\n  - '@expo/cli@58.1.14'\n  - expo@58.0.17\n";
+const resolved = resolveOptions(validArgs, { cwd: CWD, exists: notExists });
+
+test("applyAppJson은 입력값과 회사 고정값을 채우고 web 설정을 뺀다", () => {
+  const { expo } = applyAppJson(GENERATED_APP_JSON, resolved);
+
+  assert.equal(expo.name, "Sample App");
+  assert.equal(expo.slug, "sample-app");
+  assert.equal(expo.scheme, "sample-app");
+  assert.equal(expo.owner, "illunex");
+  assert.equal(expo.userInterfaceStyle, "automatic");
+  assert.equal(expo.ios.bundleIdentifier, "com.illunex.sample");
+  assert.equal(expo.android.package, "com.illunex.sample");
+  assert.equal(expo.ios.supportsTablet, false);
+  assert.equal(expo.web, undefined);
+  assert.equal(expo.android.adaptiveIcon.backgroundColor, "#E6F4FE");
+});
+
+test("applyAppJson은 iPad 지원 입력을 그대로 반영한다", () => {
+  assert.equal(applyAppJson(GENERATED_APP_JSON, { ...resolved, tablet: true }).expo.ios.supportsTablet, true);
+});
+
+test("applyAppJson은 스플래시 플러그인을 배경색으로 정확히 1개 넣는다", () => {
+  const once = applyAppJson(GENERATED_APP_JSON, resolved);
+  const twice = applyAppJson(once, resolved);
+  const splash = twice.expo.plugins.filter((plugin) => Array.isArray(plugin) && plugin[0] === "expo-splash-screen");
+
+  assert.deepEqual(splash, [
+    [
+      "expo-splash-screen",
+      {
+        image: "./assets/splash-icon.png",
+        imageWidth: 200,
+        resizeMode: "contain",
+        backgroundColor: "#0B1220",
+        dark: { backgroundColor: "#0B1220" },
+      },
+    ],
+  ]);
+  assert.deepEqual(twice, once);
+  assert.equal(GENERATED_APP_JSON.expo.plugins, undefined);
+});
+
+test("applyPackageJson은 pnpm 기준 스크립트와 jest 설정을 넣는다", () => {
+  const pkg = applyPackageJson(GENERATED_PACKAGE_JSON);
+
+  assert.deepEqual(pkg.scripts, {
+    start: "expo start",
+    android: "expo run:android",
+    ios: "expo run:ios",
+    lint: "expo lint",
+    typecheck: "tsc --noEmit",
+    test: "jest",
+    "test:scripts": 'node --test "scripts/__tests__/*.test.js"',
+    "set-version": "node scripts/set-version.js",
+    release: "node scripts/release.js",
+    "check-release": "node scripts/check-release.js",
+  });
+  assert.deepEqual(pkg.jest, {
+    preset: "jest-expo",
+    moduleNameMapper: { "^@/(.*)$": "<rootDir>/src/$1" },
+    // scripts/__tests__는 node:test로 돌리는 릴리즈 스크립트 테스트라 jest 대상에서 뺀다.
+    testPathIgnorePatterns: ["/node_modules/", "<rootDir>/scripts/"],
+  });
+  assert.deepEqual(pkg.dependencies, GENERATED_PACKAGE_JSON.dependencies);
+  assert.deepEqual(applyPackageJson(pkg), pkg);
+});
+
+test("applyTsconfig는 @/* 별칭을 src로 연결하고 strict를 유지한다", () => {
+  const tsconfig = applyTsconfig({ extends: "expo/tsconfig.base", compilerOptions: { strict: true } });
+
+  assert.deepEqual(tsconfig.compilerOptions.paths, { "@/*": ["./src/*"] });
+  // TypeScript 6부터 types 기본값이 []라 jest 전역(describe·expect)을 명시해야 typecheck가 통과한다.
+  assert.deepEqual(tsconfig.compilerOptions.types, ["jest"]);
+  assert.equal(tsconfig.compilerOptions.strict, true);
+  assert.equal(tsconfig.extends, "expo/tsconfig.base");
+});
+
+test("applyGitignore는 .env 전체를 막고 .env.example만 허용한다", () => {
+  const once = applyGitignore(GENERATED_GITIGNORE);
+  const lines = once.split("\n");
+
+  assert.ok(lines.includes(".env*"));
+  assert.ok(lines.includes("!.env.example"));
+  assert.ok(lines.includes("/ios"));
+  assert.ok(lines.includes("/android"));
+  assert.equal(applyGitignore(once), once);
+});
+
+const BUILD_SCRIPT_PACKAGES = ["'@parcel/watcher'", "dtrace-provider", "protobufjs", "unrs-resolver"];
+
+test("applyPnpmWorkspace는 의존성 빌드 스크립트를 모두 false로 명시하고 기존 설정을 유지한다", () => {
+  const once = applyPnpmWorkspace(GENERATED_PNPM_WORKSPACE);
+
+  assert.match(once, /^allowBuilds:$/m);
+  for (const name of BUILD_SCRIPT_PACKAGES) {
+    assert.match(once, new RegExp(`^ {2}${name}: false$`, "m"), name);
+  }
+  assert.ok(once.includes("minimumReleaseAgeExclude:\n  - '@expo/cli@58.1.14'\n  - expo@58.0.17\n"));
+  assert.equal(applyPnpmWorkspace(once), once);
+});
+
+test("applyPnpmWorkspace는 이미 있는 allowBuilds 블록에 빠진 항목만 더하고 기존 값은 유지한다", () => {
+  const result = applyPnpmWorkspace("allowBuilds:\n  unrs-resolver: true\nminimumReleaseAgeExclude:\n  - expo@58.0.17\n");
+
+  assert.equal(result.match(/^allowBuilds:$/gm).length, 1);
+  assert.match(result, /^ {2}unrs-resolver: true$/m);
+  assert.doesNotMatch(result, /unrs-resolver: false/);
+  assert.match(result, /^ {2}protobufjs: false$/m);
+  assert.ok(result.endsWith("minimumReleaseAgeExclude:\n  - expo@58.0.17\n"));
+});
+
+test("renderTokens는 지정한 토큰만 바꾸고 __DEV__ 같은 값은 건드리지 않는다", () => {
+  const rendered = renderTokens("a __CCM_APP_NAME__ b __DEV__ window.__NATIVE_APP__ __CCM_APP_NAME__", {
+    __CCM_APP_NAME__: "Sample App",
+  });
+
+  assert.equal(rendered, "a Sample App b __DEV__ window.__NATIVE_APP__ Sample App");
+});
+
+test("buildTokens는 템플릿 토큰 3개를 만든다", () => {
+  assert.deepEqual(buildTokens(resolved), {
+    __CCM_APP_NAME__: "Sample App",
+    __CCM_BACKGROUND_COLOR__: "#0B1220",
+    __CCM_STATUS_BAR_STYLE__: "light",
+  });
+});
+
+test("buildEnvFiles는 개발·운영 웹 URL을 각 env 파일에 쓴다", () => {
+  assert.deepEqual(buildEnvFiles(resolved), {
+    ".env.development": "EXPO_PUBLIC_WEBVIEW_URL=http://192.168.0.10:3000\n",
+    ".env.production": "EXPO_PUBLIC_WEBVIEW_URL=https://example.com\n",
+  });
+});
+
+test("sdkNotice는 템플릿 기준보다 새 SDK major가 있을 때만 알린다", () => {
+  const notice = sdkNotice("59.0.1", 58);
+
+  assert.ok(notice.includes("59"));
+  assert.ok(notice.includes("58"));
+  assert.equal(sdkNotice("58.0.17", 58), null);
+  assert.equal(sdkNotice("57.0.0", 58), null);
+  assert.equal(sdkNotice("not-a-version", 58), null);
+});
+
+test("buildChecklist는 설계 문서 4.8 순서대로 8개를 안내한다", () => {
+  const checklist = buildChecklist({ tablet: false });
+
+  assert.equal(checklist.length, 8);
+  assert.match(checklist[0], /remote/);
+  assert.match(checklist[1], /illunex/);
+  assert.match(checklist[2], /ascAppId/);
+  assert.match(checklist[3], /Play Console/);
+  assert.match(checklist[4], /EXPO_PUBLIC_WEBVIEW_URL/);
+  assert.match(checklist[5], /build:version:set/);
+  assert.match(checklist[6], /--build-only/);
+  assert.match(checklist[7], /스플래시/);
+});
+
+test("buildChecklist는 iPad 지원을 켜면 iPad 항목을 마지막에 더한다", () => {
+  const checklist = buildChecklist({ tablet: true });
+
+  assert.equal(checklist.length, 9);
+  assert.match(checklist[8], /iPad/);
+});
+
+test("RUNTIME_DEPENDENCIES는 Android에서 userInterfaceStyle을 적용하는 expo-system-ui를 포함한다", () => {
+  // prebuild 경고: "userInterfaceStyle: Install expo-system-ui in your project to enable this feature."
+  assert.ok(RUNTIME_DEPENDENCIES.includes("expo-system-ui"));
+});
+
+const TEMPLATE_ROOT = new URL("../templates/create-company-mobile/", import.meta.url);
+const readTemplate = (path) => readFileSync(new URL(path, TEMPLATE_ROOT), "utf8");
+
+test("템플릿 AGENTS.md는 생성 프로젝트 규칙을 모두 담는다", () => {
+  const agents = readTemplate("AGENTS.md");
+  const required = [
+    "__CCM_APP_NAME__",
+    "pnpm expo install",
+    "FSD",
+    "app → views → widgets → features → entities → shared",
+    "processes",
+    "Expo Router",
+    "ios/",
+    "BridgeMessage",
+    "window.__NATIVE_APP__",
+    "originWhitelist",
+    "pnpm release",
+    "--build-only",
+    ".env.example",
+    "EAS 환경 변수",
+    "eas env:pull",
+    "EAS credentials",
+    "https://docs.expo.dev/versions/",
+    // app.config.ts(동적 config) 때문에 expo install이 플러그인을 못 쓸 때의 대처
+    "Cannot automatically write to dynamic config",
+  ];
+
+  for (const text of required) {
+    assert.ok(agents.includes(text), `AGENTS.md에 "${text}"가 없습니다`);
+  }
+});
+
+test("템플릿 AGENTS.md에는 npm 계열 명령과 Router·Next.js 안내가 없다", () => {
+  const agents = readTemplate("AGENTS.md");
+
+  for (const text of ["npx ", "bunx", "Routes live in", "Next.js"]) {
+    assert.ok(!agents.includes(text), `AGENTS.md에 "${text}"가 있습니다`);
+  }
+});
+
+test("템플릿 CLAUDE.md는 AGENTS.md만 불러온다", () => {
+  assert.equal(readTemplate("CLAUDE.md").trim(), "@AGENTS.md");
+});
+
+test("템플릿 README.md는 앱 이름과 개발 빌드 실행 방법을 담는다", () => {
+  const readme = readTemplate("README.md");
+
+  assert.ok(readme.startsWith("# __CCM_APP_NAME__"));
+  assert.ok(readme.includes("pnpm ios"));
+  assert.ok(readme.includes("AGENTS.md"));
+  assert.ok(!readme.includes("npx "));
+});
+
+test("템플릿 eas.json은 EAS가 거부하는 빈 ascAppId를 두지 않고, 배포 전 검사가 미입력을 잡는다", async () => {
+  const easJson = JSON.parse(readTemplate("eas.json"));
+  const { findSubmitProblems } = await import("../templates/create-company-mobile/scripts/check-release.js");
+
+  // eas-cli는 "submit.production.ios.ascAppId" is not allowed to be empty로 eas.json 전체를 거부한다.
+  assert.equal(easJson.submit.production.ios.ascAppId, undefined);
+  assert.equal(findSubmitProblems(easJson, "ios").length, 1);
+  assert.deepEqual(findSubmitProblems(easJson, "android"), []);
+});
+
+test("릴리즈 워크플로의 submit 입력은 문자열 비교라 -F submit=false가 참으로 평가되지 않는다", () => {
+  const workflow = readTemplate(".eas/workflows/release.yml");
+
+  // eas workflow:run -F는 값을 문자열로 보내므로 boolean 강제 변환에 기대지 않는다.
+  assert.match(workflow, /submit:\n\s+type: choice\n\s+options: \['true', 'false'\]\n\s+default: 'true'/);
+  assert.equal(workflow.match(/if: \$\{\{ inputs\.submit == 'true' \}\}/g)?.length, 2);
+  assert.doesNotMatch(workflow, /if: \$\{\{ inputs\.submit \}\}/);
+});
+
+test("buildRecoveryMessage는 생성기 이후 실패 시 원인·폴더·재시작 방법을 알려 준다", () => {
+  const message = buildRecoveryMessage("명령 실패: pnpm install", "/work/sample app");
+
+  assert.ok(message.includes("명령 실패: pnpm install"));
+  assert.ok(message.includes('rm -rf "/work/sample app"'));
+  assert.match(message, /다시 실행/);
+});
+
+test("INSTALL_HINT는 팀원이 직접 고칠 수 있는 방법만 안내한다", () => {
+  // 설치된 CLI(~/.local/share)를 고치라고 하지 않고, 저장소 담당자에게 알리게 한다.
+  assert.doesNotMatch(INSTALL_HINT, /DISALLOWED_BUILDS도 갱신하세요/);
+  assert.match(INSTALL_HINT, /front-dev-tools/);
+});

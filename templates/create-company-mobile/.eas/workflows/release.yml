@@ -1,0 +1,69 @@
+# 스토어 테스트 트랙(TestFlight / Play 내부 테스트)까지 올리는 릴리즈 워크플로.
+# 직접 실행하지 말고 `pnpm release [all|ios|android] [--build-only]`로 실행한다(로컬 가드 때문).
+# 심사 제출·프로덕션 출시는 스토어 콘솔에서 사람이 한다.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        type: choice
+        options: [all, ios, android]
+        default: all
+        required: true
+      # eas workflow:run -F는 값을 문자열로 보내므로 boolean 대신 'true'/'false' 문자열로 받고 문자열로 비교한다.
+      submit:
+        type: choice
+        options: ['true', 'false']
+        default: 'true'
+        required: true
+
+jobs:
+  verify:
+    name: Verify
+    # 빌드가 쓰는 운영 웹 URL(EAS production 환경 변수)을 check-release가 검사한다.
+    environment: production
+    steps:
+      - uses: eas/checkout
+      - uses: eas/install_node_modules
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm test:scripts
+      - run: node scripts/check-release.js --platform ${{ inputs.platform }} --submit ${{ inputs.submit }}
+
+  build_ios:
+    name: Build iOS
+    needs: [verify]
+    if: ${{ inputs.platform == 'all' || inputs.platform == 'ios' }}
+    type: build
+    params:
+      platform: ios
+      profile: production
+
+  submit_ios:
+    name: Submit iOS (TestFlight)
+    needs: [build_ios]
+    if: ${{ inputs.submit == 'true' }}
+    type: submit
+    params:
+      build_id: ${{ needs.build_ios.outputs.build_id }}
+      profile: production
+
+  build_android:
+    name: Build Android
+    needs: [verify]
+    if: ${{ inputs.platform == 'all' || inputs.platform == 'android' }}
+    type: build
+    params:
+      platform: android
+      profile: production
+
+  submit_android:
+    name: Submit Android (internal track)
+    needs: [build_android]
+    if: ${{ inputs.submit == 'true' }}
+    type: submit
+    params:
+      build_id: ${{ needs.build_android.outputs.build_id }}
+      profile: production
