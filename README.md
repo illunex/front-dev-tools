@@ -58,7 +58,7 @@ Claude Code · Codex · Cursor에 회사 공통 개발 컨벤션을 설치합니
 - `company-commit` — 커밋 메시지(Conventional Commits 한국어 명사형)
 - `company-branch` — 브랜치 네이밍
 - `company-pr` — PR 제목·본문 템플릿
-- `company-folder-structure` — Next.js App Router + Feature based 폴더 구조(새 파일 배치)
+- `company-folder-structure` — 폴더 구조(새 파일 배치). 새 프로젝트와 FSD 프로젝트는 FSD, 기존 프로젝트는 현재 구조 유지
 - `company-component-refactor` — 컴포넌트 리팩토링·구조 정리(inline 분리·`type.ts` 분리·단독 컴포넌트 재배치·중복 constants/utils 정리)
 
 ```bash
